@@ -55,6 +55,9 @@ class TennisMatchState {
   final bool isSuperTieBreak; 
   final bool isMatchComplete;
   final Player? matchWinner;
+  
+  // History: e.g. ["6-4", "2-6", "7-6"]
+  final List<String> setScores; 
 
   const TennisMatchState({
     required this.matchType,
@@ -77,6 +80,7 @@ class TennisMatchState {
     this.isSuperTieBreak = false,
     this.isMatchComplete = false,
     this.matchWinner,
+    this.setScores = const [],
   });
 
   factory TennisMatchState.initial({
@@ -105,6 +109,7 @@ class TennisMatchState {
       currentSetIndex: 0,
       server: startingServer,
       setsToWin: setsToWin,
+      setScores: const [],
     );
   }
 
@@ -128,6 +133,7 @@ class TennisMatchState {
     bool? isSuperTieBreak,
     bool? isMatchComplete,
     Player? matchWinner,
+    List<String>? setScores,
   }) {
     return TennisMatchState(
       matchType: matchType ?? this.matchType,
@@ -150,6 +156,7 @@ class TennisMatchState {
       isSuperTieBreak: isSuperTieBreak ?? this.isSuperTieBreak,
       isMatchComplete: isMatchComplete ?? this.isMatchComplete,
       matchWinner: matchWinner ?? this.matchWinner,
+      setScores: setScores ?? this.setScores,
     );
   }
 }

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../logic/tennis_state_machine.dart';
 import '../models/tennis_match_state.dart';
 import 'tennis_court_card.dart';
+import 'dart:convert';
+import '../../../core/database/database_helper.dart';
+import '../../../core/models/match_result.dart';
 
 class TennisScoreScreen extends StatefulWidget {
   final MatchType matchType;
@@ -82,6 +85,7 @@ class _TennisScoreScreenState extends State<TennisScoreScreen> {
                     _machine.undo();
                     _update();
                   },
+                  onSave: _saveMatch,
                 ),
               ),
             ),
@@ -133,6 +137,44 @@ class _TennisScoreScreenState extends State<TennisScoreScreen> {
         ),
       ),
     );
+  }
+
+    Future<void> _saveMatch() async {
+    final state = _machine.state;
+    if (!state.isMatchComplete) return;
+
+    final String teamA = state.matchType == MatchType.doubles
+        ? "${state.playerA1Name} & ${state.playerA2Name}"
+        : state.playerA1Name;
+    
+    final String teamB = state.matchType == MatchType.doubles
+        ? "${state.playerB1Name} & ${state.playerB2Name}"
+        : state.playerB1Name;
+
+    final result = MatchResult(
+      sport: 'Tennis',
+      date: DateTime.now(),
+      teamA: teamA,
+      teamB: teamB,
+      scoreA: state.setsWonPlayerA,
+      scoreB: state.setsWonPlayerB,
+      winner: state.matchWinner == Player.playerA ? teamA : teamB,
+      details: jsonEncode({
+        'setsWonA': state.setsWonPlayerA,
+        'setsWonB': state.setsWonPlayerB,
+        'gamesWonA': state.gamesPlayerA,
+        'gamesWonB': state.gamesPlayerB,
+        'setHistory': state.setScores,
+      }),
+    );
+
+    await DatabaseHelper.instance.insertMatch(result);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Match Result Saved!")),
+      );
+    }
   }
 
   void _showResetDialog() {

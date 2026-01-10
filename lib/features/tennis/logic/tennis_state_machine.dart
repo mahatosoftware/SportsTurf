@@ -226,6 +226,10 @@ class TennisStateMachine {
     }
     
     Player nextServer = current.server == Player.playerA ? Player.playerB : Player.playerA;
+    
+    // Record Set Score: "6-3" or "7-6(4)" if tie break logic was fuller, but here "7-6" or "6-2"
+    final String setScore = "${current.gamesPlayerA}-${current.gamesPlayerB}";
+    final List<String> updatedHistory = List.from(current.setScores)..add(setScore);
 
     // Check Match Win
     if (sA == current.setsToWin) {
@@ -236,7 +240,8 @@ class TennisStateMachine {
         tieBreakPointB: 0,
         isTimBreak: false,
         isMatchComplete: true,
-        matchWinner: Player.playerA
+        matchWinner: Player.playerA,
+        setScores: updatedHistory,
       );
     }
     if (sB == current.setsToWin) {
@@ -248,7 +253,8 @@ class TennisStateMachine {
         tieBreakPointB: 0,
         isTimBreak: false,
         isMatchComplete: true,
-        matchWinner: Player.playerB
+        matchWinner: Player.playerB,
+        setScores: updatedHistory,
       );
     }
 
@@ -265,7 +271,8 @@ class TennisStateMachine {
       isTimBreak: false,
       isSuperTieBreak: false,
       currentSetIndex: current.currentSetIndex + 1,
-      server: nextServer
+      server: nextServer,
+      setScores: updatedHistory,
     );
   }
 }

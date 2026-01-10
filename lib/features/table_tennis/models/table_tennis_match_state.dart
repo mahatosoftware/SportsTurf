@@ -25,6 +25,9 @@ class TableTennisMatchState {
   
   final bool isMatchComplete;
   final TTPlayer? matchWinner;
+  
+  // History
+  final List<String> setHistory; 
 
   const TableTennisMatchState({
     required this.matchType,
@@ -42,6 +45,7 @@ class TableTennisMatchState {
     required this.isManualServeSide,
     this.isMatchComplete = false,
     this.matchWinner,
+    this.setHistory = const [],
   });
 
   factory TableTennisMatchState.initial({
@@ -67,6 +71,7 @@ class TableTennisMatchState {
       server: startingServer,
       serveSide: TTSide.right, 
       isManualServeSide: false,
+      setHistory: const [],
     );
   }
 
@@ -85,6 +90,7 @@ class TableTennisMatchState {
     bool? isManualServeSide,
     bool? isMatchComplete,
     TTPlayer? matchWinner,
+    List<String>? setHistory,
   }) {
     return TableTennisMatchState(
       matchType: matchType ?? this.matchType,
@@ -102,6 +108,7 @@ class TableTennisMatchState {
       isManualServeSide: isManualServeSide ?? this.isManualServeSide,
       isMatchComplete: isMatchComplete ?? this.isMatchComplete,
       matchWinner: matchWinner ?? this.matchWinner,
+      setHistory: setHistory ?? this.setHistory,
     );
   }
 }

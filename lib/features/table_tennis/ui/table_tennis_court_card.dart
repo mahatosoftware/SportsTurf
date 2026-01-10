@@ -8,6 +8,7 @@ class TableTennisCourtCard extends StatelessWidget {
   final VoidCallback onScoreB;
   final VoidCallback onUndo;
   final VoidCallback onToggleSide;
+  final VoidCallback? onSave;
 
   const TableTennisCourtCard({
     super.key,
@@ -16,6 +17,7 @@ class TableTennisCourtCard extends StatelessWidget {
     required this.onScoreB,
     required this.onUndo,
     required this.onToggleSide,
+    this.onSave,
   });
 
   @override
@@ -161,6 +163,17 @@ class TableTennisCourtCard extends StatelessWidget {
                             style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
+                          const SizedBox(height: 16),
+                          if (onSave != null)
+                             ElevatedButton.icon(
+                               onPressed: onSave,
+                               icon: const Icon(Icons.save),
+                               label: const Text("Save Match Result"),
+                               style: ElevatedButton.styleFrom(
+                                 backgroundColor: Colors.white,
+                                 foregroundColor: Colors.black,
+                               ),
+                             ),
                         ],
                       ),
                     ),

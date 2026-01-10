@@ -75,6 +75,11 @@ class VolleyballStateMachine {
       newSetsB++;
     }
 
+    // Record Set Score: "25-23"
+    // Use consistent A-B format.
+    final String currentSetScore = "${_currentState.scoreA}-${_currentState.scoreB}";
+    final List<String> updatedHistory = List.from(_currentState.setHistory)..add(currentSetScore);
+
     // Check Match Win
     if (newSetsA >= _currentState.setsToWin || newSetsB >= _currentState.setsToWin) {
       _currentState = _currentState.copyWith(
@@ -83,6 +88,7 @@ class VolleyballStateMachine {
         setsWonB: newSetsB,
         matchWinner: winner,
         isMatchComplete: true,
+        setHistory: updatedHistory,
       );
     } else {
       // Start next set
@@ -107,6 +113,7 @@ class VolleyballStateMachine {
         // Actually, normally it alternates or is coin-tossed. 
         // Let user manually override if needed, but default to winner serves.
         servingTeam: winner, 
+        setHistory: updatedHistory,
       );
     }
   }

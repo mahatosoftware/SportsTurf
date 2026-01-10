@@ -15,6 +15,9 @@ class VolleyballMatchState {
   final String teamAName;
   final String teamBName;
   
+  // History
+  final List<String> setHistory;
+
   const VolleyballMatchState({
     required this.scoreA,
     required this.scoreB,
@@ -27,6 +30,7 @@ class VolleyballMatchState {
     this.setsToWin = 3,
     required this.teamAName,
     required this.teamBName,
+    this.setHistory = const [],
   });
 
   factory VolleyballMatchState.initial({
@@ -45,6 +49,7 @@ class VolleyballMatchState {
       setsToWin: setsToWin,
       teamAName: teamAName,
       teamBName: teamBName,
+      setHistory: const [],
     );
   }
 
@@ -60,6 +65,7 @@ class VolleyballMatchState {
     int? setsToWin,
     String? teamAName,
     String? teamBName,
+    List<String>? setHistory,
   }) {
     return VolleyballMatchState(
       scoreA: scoreA ?? this.scoreA,
@@ -73,6 +79,7 @@ class VolleyballMatchState {
       setsToWin: setsToWin ?? this.setsToWin,
       teamAName: teamAName ?? this.teamAName,
       teamBName: teamBName ?? this.teamBName,
+      setHistory: setHistory ?? this.setHistory,
     );
   }
 }

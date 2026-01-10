@@ -102,6 +102,13 @@ class TableTennisStateMachine {
       newGamesB++;
     }
     
+    // Record Set Score
+    // Format: "11-8" (Player A - Player B)
+    // Or maybe we want relative to who won? Standard is usually A-B or Winner-Loser.
+    // Let's store "ScoreA-ScoreB" consistent with match.
+    final String currentSetScore = "${_currentState.scoreA}-${_currentState.scoreB}";
+    final List<String> updatedHistory = List.from(_currentState.setHistory)..add(currentSetScore);
+
     if (newGamesA >= _currentState.gamesToWin || newGamesB >= _currentState.gamesToWin) {
       _currentState = _currentState.copyWith(
         scoreA: 0, scoreB: 0, 
@@ -109,6 +116,7 @@ class TableTennisStateMachine {
         gamesWonB: newGamesB,
         matchWinner: winner,
         isMatchComplete: true,
+        setHistory: updatedHistory,
       );
     } else {
       // Rule: "The player who served first in a game shall receive first in the next game."
@@ -122,6 +130,7 @@ class TableTennisStateMachine {
         gamesWonB: newGamesB,
         server: winner, 
         serveSide: TTSide.right,
+        setHistory: updatedHistory,
       );
     }
   }

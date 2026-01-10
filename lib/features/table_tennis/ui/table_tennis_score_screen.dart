@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/table_tennis_match_state.dart';
 import '../logic/table_tennis_state_machine.dart';
 import 'table_tennis_court_card.dart';
+import 'dart:convert';
+import '../../../core/database/database_helper.dart';
+import '../../../core/models/match_result.dart';
 
 class TableTennisScoreScreen extends StatefulWidget {
   final TTMatchType matchType;
@@ -46,6 +49,44 @@ class _TableTennisScoreScreenState extends State<TableTennisScoreScreen> {
   }
 
   void _update() => setState(() {});
+
+  Future<void> _saveMatch() async {
+    final state = _machine.state;
+    if (!state.isMatchComplete) return;
+
+    final String teamA = state.matchType == TTMatchType.doubles
+        ? "${state.playerA1Name} & ${state.playerA2Name}"
+        : state.playerA1Name;
+    
+    final String teamB = state.matchType == TTMatchType.doubles
+        ? "${state.playerB1Name} & ${state.playerB2Name}"
+        : state.playerB1Name;
+
+    final result = MatchResult(
+      sport: 'Table Tennis',
+      date: DateTime.now(),
+      teamA: teamA,
+      teamB: teamB,
+      scoreA: state.gamesWonA,
+      scoreB: state.gamesWonB,
+      winner: state.matchWinner == TTPlayer.playerA ? teamA : teamB,
+      details: jsonEncode({
+        'gamesWonA': state.gamesWonA,
+        'gamesWonB': state.gamesWonB,
+        'gamesToWin': state.gamesToWin,
+        'setHistory': state.setHistory,
+      }),
+    );
+
+    await DatabaseHelper.instance.insertMatch(result);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Match Result Saved!")),
+      );
+    }
+  }
+
 
   Future<void> _showServeSelectionDialog() async {
     await showDialog(
@@ -117,6 +158,7 @@ class _TableTennisScoreScreenState extends State<TableTennisScoreScreen> {
             onScoreB: () { _machine.scorePoint(TTPlayer.playerB); _update(); },
             onUndo: () { _machine.undo(); _update(); },
             onToggleSide: () { _machine.toggleServeSide(); _update(); },
+            onSave: _saveMatch,
           ),
         ),
       ),

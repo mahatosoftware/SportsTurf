@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../logic/volleyball_state_machine.dart';
 import '../models/volleyball_match_state.dart';
 import 'volleyball_court_painter.dart';
+import 'dart:convert';
+import '../../../core/database/database_helper.dart';
+import '../../../core/models/match_result.dart';
 
 class VolleyballScoreScreen extends StatefulWidget {
   final String teamAName;
@@ -48,6 +51,34 @@ class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
     setState(() {
       _stateMachine.reset();
     });
+  }
+
+  Future<void> _saveMatch() async {
+    final state = _stateMachine.state;
+    if (!state.isMatchComplete) return;
+
+    final result = MatchResult(
+      sport: 'Volleyball',
+      date: DateTime.now(),
+      teamA: widget.teamAName,
+      teamB: widget.teamBName,
+      scoreA: state.setsWonA, // For Volleyball, match score is Sets won? Or total points? Standard is Sets.
+      scoreB: state.setsWonB,
+      winner: state.matchWinner == VolleyballTeam.teamA ? widget.teamAName : widget.teamBName,
+      details: jsonEncode({
+        'setsWonA': state.setsWonA,
+        'setsWonB': state.setsWonB,
+        'setHistory': state.setHistory,
+      }),
+    );
+
+    await DatabaseHelper.instance.insertMatch(result);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Match Result Saved!")),
+      );
+    }
   }
 
   @override
@@ -178,6 +209,16 @@ class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
                         ElevatedButton(
                           onPressed: _reset,
                           child: const Text("New Match"),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: _saveMatch,
+                          icon: const Icon(Icons.save),
+                          label: const Text("Save Result"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white, 
+                            foregroundColor: Colors.black,
+                          ),
                         ),
                       ],
                     ),

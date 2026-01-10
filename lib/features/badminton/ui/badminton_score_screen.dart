@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../logic/badminton_state_machine.dart';
 import '../models/badminton_match_state.dart';
 import 'badminton_court_card.dart';
+import 'dart:convert';
+import '../../../core/database/database_helper.dart';
+import '../../../core/models/match_result.dart';
 
 class BadmintonScoreScreen extends StatefulWidget {
   final BadmintonMatchType matchType;
@@ -105,6 +108,44 @@ class _BadmintonScoreScreenState extends State<BadmintonScoreScreen> {
     );
   }
 
+  Future<void> _saveMatch() async {
+    final state = _machine.state;
+    if (!state.isMatchComplete) return;
+
+    final String teamA = state.matchType == BadmintonMatchType.doubles
+        ? "${state.playerA1Name} & ${state.playerA2Name}"
+        : state.playerA1Name;
+    
+    final String teamB = state.matchType == BadmintonMatchType.doubles
+        ? "${state.playerB1Name} & ${state.playerB2Name}"
+        : state.playerB1Name;
+
+    final result = MatchResult(
+      sport: 'Badminton',
+      date: DateTime.now(),
+      teamA: teamA,
+      teamB: teamB,
+      scoreA: state.gamesWonA,
+      scoreB: state.gamesWonB,
+      winner: state.matchWinner == BadmintonPlayer.playerA ? teamA : teamB,
+      details: jsonEncode({
+        'setHistory': state.setHistory,
+        'finalScoreA': state.scoreA,
+        'finalScoreB': state.scoreB,
+        'setsToWin': state.setsToWin,
+        'pointsPerGame': state.pointsPerGame,
+      }),
+    );
+
+    await DatabaseHelper.instance.insertMatch(result);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Match Result Saved!")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,6 +180,7 @@ class _BadmintonScoreScreenState extends State<BadmintonScoreScreen> {
                    _machine.undo();
                    _update();
                 },
+                onSave: _saveMatch,
               ),
             ),
           ),

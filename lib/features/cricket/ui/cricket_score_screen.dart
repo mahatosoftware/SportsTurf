@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../logic/cricket_state_machine.dart';
 import '../models/cricket_match_state.dart';
 import 'cricket_stats_screen.dart';
+import 'dart:convert';
+import '../../../core/database/database_helper.dart';
+import '../../../core/models/match_result.dart';
 
 class CricketScoreScreen extends StatefulWidget {
   final String teamA;
@@ -380,6 +383,47 @@ class _CricketScoreScreenState extends State<CricketScoreScreen> {
   
   Color _isOutColor(bool isOut) => isOut ? Colors.red : Colors.white;
 
+  Future<void> _saveMatch() async {
+    final state = _machine.state;
+    if (!state.isMatchComplete) return;
+
+    final result = MatchResult(
+      sport: 'Cricket',
+      date: DateTime.now(),
+      teamA: widget.teamA,
+      teamB: widget.teamB,
+      // For Cricket, score is complex. We can store runs of each team from history.
+      // But MatchState only keeps current inning details in top level? 
+      // Actually CricketMatchState doesn't nicely store previous innings summary in easy fields.
+      // We will assume Inning 1 was Team A (or whoever batted first) and Inning 2 is current.
+      // A better way relies on the 'matchResult' string which describes who won.
+      // Let's store total runs of current batting and bowling teams?
+      // Since it's done, 'totalRuns' is the chasing team's score. 'targetRuns - 1' was first inning score?
+      
+      // Simplification: Store "Runs/Wickets" as the score string for A and B.
+      scoreA: -1, // Placeholder, using Details for real scores
+      scoreB: -1,
+      winner: state.matchResult ?? "Draw", 
+      details: jsonEncode({
+        'resultDescription': state.matchResult,
+        'totalOvers': state.totalOvers,
+        'finalScore': "${state.totalRuns}/${state.wicketsLost} (${state.oversCompleted}.${state.ballsInOver})",
+        // Ideally we'd have full scorecard here.
+      }),
+    );
+
+    // Override winner text with just Team Name if possible, but matchResult is "Team A wins by..."
+    // Let's parse or just save the full result string as winner for now.
+    
+    await DatabaseHelper.instance.insertMatch(result);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Match Result Saved!")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = _machine.state;
@@ -424,22 +468,34 @@ class _CricketScoreScreenState extends State<CricketScoreScreen> {
                           style: const TextStyle(color: Colors.yellowAccent, fontWeight: FontWeight.bold)),
                      ),
                   if (s.isMatchComplete)
-                     Container(
-                       margin: const EdgeInsets.only(top: 16),
-                       padding: const EdgeInsets.all(8),
-                       color: Colors.green,
-                       child: Column(
-                         children: [
-                           Text(s.matchResult ?? "GAME OVER", 
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
-                           const SizedBox(height: 8),
-                           ElevatedButton(
-                             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => CricketStatsScreen(state: s))),
-                             child: const Text("VIEW FULL STATS"),
-                           )
-                         ],
-                       ),
-                     )
+                    Container(
+                      margin: const EdgeInsets.only(top: 16),
+                      padding: const EdgeInsets.all(8),
+                      color: Colors.green,
+                      child: Column(
+                        children: [
+                          Text(s.matchResult ?? "GAME OVER", 
+                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => CricketStatsScreen(state: s))),
+                                child: const Text("STATS"),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton.icon(
+                                onPressed: _saveMatch,
+                                icon: const Icon(Icons.save),
+                                label: const Text("SAVE"),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black),
+                              ),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
