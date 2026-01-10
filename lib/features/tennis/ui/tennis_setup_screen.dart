@@ -29,10 +29,10 @@ class _TennisSetupScreenState extends State<TennisSetupScreen> {
 
   void _startGame() {
     // Basic validation or defaults
-    String a1 = _pA1Controller.text.trim();
-    String a2 = _pA2Controller.text.trim();
-    String b1 = _pB1Controller.text.trim();
-    String b2 = _pB2Controller.text.trim();
+    String a1 = _pA1Controller.text.trim().toUpperCase();
+    String a2 = _pA2Controller.text.trim().toUpperCase();
+    String b1 = _pB1Controller.text.trim().toUpperCase();
+    String b2 = _pB2Controller.text.trim().toUpperCase();
 
     if (a1.isEmpty) a1 = "Player A";
     if (b1.isEmpty) b1 = "Player B";
@@ -180,6 +180,7 @@ class _TennisSetupScreenState extends State<TennisSetupScreen> {
   Widget _buildTextField(TextEditingController controller, String hint, IconData icon) {
     return TextField(
       controller: controller,
+      textCapitalization: TextCapitalization.characters,
       style: const TextStyle(color: Colors.black87),
       decoration: InputDecoration(
         labelText: hint,
