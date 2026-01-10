@@ -16,6 +16,9 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
   final TextEditingController _pA2Controller = TextEditingController(); 
   final TextEditingController _pB1Controller = TextEditingController();
   final TextEditingController _pB2Controller = TextEditingController();
+  
+  int _pointsPerGame = 21;
+  int _setsToWin = 2; // Default to 2 sets to win (Best of 3)
 
   @override
   void dispose() {
@@ -44,6 +47,8 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
           playerA2: a2,
           playerB1: b1,
           playerB2: b2,
+          setsToWin: _setsToWin,
+          pointsPerGame: _pointsPerGame,
         ),
       ),
     );
@@ -60,8 +65,9 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -130,10 +136,65 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
                 style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
              const SizedBox(height: 8),
             _buildTextField(_pB1Controller, isDoubles ? "Player 1 Name" : "Player Name", Icons.person),
-            if (isDoubles) ...[
-              const SizedBox(height: 8),
-              _buildTextField(_pB2Controller, "Player 2 Name", Icons.person_outline),
-            ],
+             if (isDoubles) ...[
+               const SizedBox(height: 8),
+               _buildTextField(_pB2Controller, "Player 2 Name", Icons.person_outline),
+             ],
+ 
+             const SizedBox(height: 32),
+             
+             // Points Configuration
+             const Text("POINTS PER GAME", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+             const SizedBox(height: 12),
+             SegmentedButton<int>(
+               segments: const [
+                 ButtonSegment(value: 11, label: Text("11"), icon: Icon(Icons.flash_on)),
+                 ButtonSegment(value: 15, label: Text("15")),
+                 ButtonSegment(value: 21, label: Text("21")),
+                 ButtonSegment(value: 31, label: Text("31")),
+               ],
+               selected: {_pointsPerGame},
+               onSelectionChanged: (Set<int> newSelection) {
+                 setState(() { _pointsPerGame = newSelection.first; });
+               },
+               style: ButtonStyle(
+                 backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                   if (states.contains(WidgetState.selected)) return Colors.green;
+                   return Colors.grey[200]!; 
+                 }),
+                 foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                    if (states.contains(WidgetState.selected)) return Colors.white;
+                   return Colors.black87;
+                 }),
+               ),
+             ),
+             
+             const SizedBox(height: 24),
+
+             // Sets Configuration
+             const Text("SETS TO WIN", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+             const SizedBox(height: 12),
+             SegmentedButton<int>(
+               segments: const [
+                 ButtonSegment(value: 1, label: Text("Best of 1")),
+                 ButtonSegment(value: 2, label: Text("Best of 3")),
+                 ButtonSegment(value: 3, label: Text("Best of 5")),
+               ],
+               selected: {_setsToWin},
+               onSelectionChanged: (Set<int> newSelection) {
+                 setState(() { _setsToWin = newSelection.first; });
+               },
+               style: ButtonStyle(
+                 backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                   if (states.contains(WidgetState.selected)) return Colors.green;
+                   return Colors.grey[200]!; 
+                 }),
+                 foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                    if (states.contains(WidgetState.selected)) return Colors.white;
+                   return Colors.black87;
+                 }),
+               ),
+             ),
 
             const SizedBox(height: 48),
 
@@ -151,7 +212,8 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
                 child: const Text("START MATCH", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

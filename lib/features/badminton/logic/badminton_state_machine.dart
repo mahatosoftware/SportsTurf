@@ -11,6 +11,7 @@ class BadmintonStateMachine {
     String playerB1Name = "Player B",
     String playerB2Name = "",
     int setsToWin = 2,
+    int pointsPerGame = 21,
   }) : _currentState = BadmintonMatchState.initial(
           matchType: matchType,
           playerA1Name: playerA1Name,
@@ -18,6 +19,7 @@ class BadmintonStateMachine {
           playerB1Name: playerB1Name,
           playerB2Name: playerB2Name,
           setsToWin: setsToWin,
+          pointsPerGame: pointsPerGame,
         );
 
   BadmintonMatchState get state => _currentState;
@@ -55,11 +57,32 @@ class BadmintonStateMachine {
   bool _checkGameWin(int scoreA, int scoreB, bool winnerIsA) {
     int winnerScore = winnerIsA ? scoreA : scoreB;
     int loserScore = winnerIsA ? scoreB : scoreA;
+    int pts = _currentState.pointsPerGame;
 
-    if (winnerScore >= 21 && (winnerScore - loserScore) >= 2) {
+    // Standard win by 2
+    if (winnerScore >= pts && (winnerScore - loserScore) >= 2) {
       return true;
     }
-    if (winnerScore >= 30) {
+    // Hard cap at 30 (usually 29-29 -> next point wins at 30)
+    // If custom points are small (e.g. 11), cap might be different?
+    // Standard rule: Cap is usually Points + 9? (21 -> 30).
+    // Or just hardcap at 30 for simplicity unless points > 29.
+    // Let's implement dynamic cap: Cap = Points + 9? 
+    // Actually standard is 21 -> 30. 
+    // If we play 11 points, do we cap at 15? 
+    // Let's stick to standard 30 cap for now, or just remove cap if it's custom.
+    // Simplifying: If pointsPerGame is 21, cap is 30.
+    // If pointsPerGame is 15, cap is usually 17? Or no cap?
+    // Let's just use the `score >= pts && diff >= 2` rule and Maybe a basic cap.
+    
+    int cap = 30;
+    if (pts != 21) {
+       // Heuristic: If custom, simple win by 2, maybe no hard cap or high cap.
+       // Let's set cap to pts + 9.
+       cap = pts + 9;
+    }
+    
+    if (winnerScore >= cap) {
       return true;
     }
     return false;
@@ -117,6 +140,7 @@ class BadmintonStateMachine {
       playerB1Name: _currentState.playerB1Name,
       playerB2Name: _currentState.playerB2Name,
       setsToWin: _currentState.setsToWin,
+      pointsPerGame: _currentState.pointsPerGame,
       startingServer: startingServer,
     );
   }

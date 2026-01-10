@@ -9,6 +9,8 @@ class BadmintonScoreScreen extends StatefulWidget {
   final String playerA2;
   final String playerB1;
   final String playerB2;
+  final int setsToWin;
+  final int pointsPerGame;
 
   const BadmintonScoreScreen({
     super.key,
@@ -17,6 +19,8 @@ class BadmintonScoreScreen extends StatefulWidget {
     this.playerA2 = "",
     this.playerB1 = "Player B",
     this.playerB2 = "",
+    this.setsToWin = 2,
+    this.pointsPerGame = 21,
   });
 
   @override
@@ -35,6 +39,8 @@ class _BadmintonScoreScreenState extends State<BadmintonScoreScreen> {
       playerA2Name: widget.playerA2,
       playerB1Name: widget.playerB1,
       playerB2Name: widget.playerB2,
+      setsToWin: widget.setsToWin,
+      pointsPerGame: widget.pointsPerGame,
     );
     
     // Choose initial server

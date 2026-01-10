@@ -18,6 +18,7 @@ class BadmintonMatchState {
   
   final BadmintonPlayer server; 
   final int setsToWin; 
+  final int pointsPerGame; // New Field
   final bool isMatchComplete;
   final BadmintonPlayer? matchWinner;
 
@@ -34,6 +35,7 @@ class BadmintonMatchState {
     required this.setHistory,
     required this.server,
     required this.setsToWin,
+    required this.pointsPerGame,
     this.isMatchComplete = false,
     this.matchWinner,
   });
@@ -45,6 +47,7 @@ class BadmintonMatchState {
     String playerB1Name = "Player B",
     String playerB2Name = "",
     int setsToWin = 2,
+    int pointsPerGame = 21,
     BadmintonPlayer startingServer = BadmintonPlayer.playerA,
   }) {
     return BadmintonMatchState(
@@ -60,6 +63,7 @@ class BadmintonMatchState {
       setHistory: [],
       server: startingServer,
       setsToWin: setsToWin,
+      pointsPerGame: pointsPerGame,
     );
   }
 
@@ -86,6 +90,7 @@ class BadmintonMatchState {
       setHistory: setHistory ?? this.setHistory,
       server: server ?? this.server,
       setsToWin: setsToWin,
+      pointsPerGame: pointsPerGame,
       isMatchComplete: isMatchComplete ?? this.isMatchComplete,
       matchWinner: matchWinner ?? this.matchWinner,
     );
