@@ -3,6 +3,8 @@ import '../features/coin_toss/coin_toss_screen.dart';
 
 import '../features/tennis/ui/tennis_setup_screen.dart';
 
+import '../features/badminton/ui/badminton_setup_screen.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -36,7 +38,7 @@ class HomeScreen extends StatelessWidget {
              _buildFeatureCard(
               context,
               title: "Tennis Score",
-              icon: Icons.sports_tennis,
+              icon: Icons.sports_tennis, // Tennis Ball
               color: Colors.lightGreen,
               onTap: () {
                 Navigator.push(
@@ -45,8 +47,18 @@ class HomeScreen extends StatelessWidget {
                 );
               },
             ),
-
-            // Placeholder for future features
+            _buildFeatureCard(
+              context,
+              title: "Badminton",
+              icon: Icons.sports_tennis_rounded, // Use similar icon but distinct color
+              color: Colors.teal,
+              onTap: () {
+                 Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const BadmintonSetupScreen()),
+                );
+              },
+            ),
              _buildFeatureCard(
               context,
               title: "Scoreboard",
