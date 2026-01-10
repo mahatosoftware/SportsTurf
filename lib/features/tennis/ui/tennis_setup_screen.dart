@@ -62,116 +62,118 @@ class _TennisSetupScreenState extends State<TennisSetupScreen> {
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Heading
-            const Text(
-              "Select Players",
-              style: TextStyle(
-                fontSize: 24, 
-                fontWeight: FontWeight.bold,
-                color: Colors.black87
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Heading
+              const Text(
+                "Select Players",
+                style: TextStyle(
+                  fontSize: 24, 
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            
-            // 1. Type Selection Card
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    const Text("MATCH TYPE", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    SegmentedButton<MatchType>(
-                      segments: const [
-                        ButtonSegment(
-                          value: MatchType.singles,
-                          label: Text("SINGLES"),
-                          icon: Icon(Icons.person),
+              const SizedBox(height: 24),
+              
+              // 1. Type Selection Card
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      const Text("MATCH TYPE", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+                      SegmentedButton<MatchType>(
+                        segments: const [
+                          ButtonSegment(
+                            value: MatchType.singles,
+                            label: Text("SINGLES"),
+                            icon: Icon(Icons.person),
+                          ),
+                          ButtonSegment(
+                            value: MatchType.doubles,
+                            label: Text("DOUBLES"),
+                            icon: Icon(Icons.group),
+                          ),
+                        ],
+                        selected: {_matchType},
+                        onSelectionChanged: (Set<MatchType> newSelection) {
+                          setState(() {
+                            _matchType = newSelection.first;
+                          });
+                        },
+                        style: ButtonStyle(
+                          backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return Colors.green; // Green for selected
+                            }
+                            return Colors.grey[200]!; // Light grey for unselected
+                          }),
+                          foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                             if (states.contains(WidgetState.selected)) {
+                              return Colors.white;
+                            }
+                            return Colors.black87;
+                          }),
                         ),
-                        ButtonSegment(
-                          value: MatchType.doubles,
-                          label: Text("DOUBLES"),
-                          icon: Icon(Icons.group),
-                        ),
-                      ],
-                      selected: {_matchType},
-                      onSelectionChanged: (Set<MatchType> newSelection) {
-                        setState(() {
-                          _matchType = newSelection.first;
-                        });
-                      },
-                      style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                          if (states.contains(WidgetState.selected)) {
-                            return Colors.green; // Green for selected
-                          }
-                          return Colors.grey[200]!; // Light grey for unselected
-                        }),
-                        foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                           if (states.contains(WidgetState.selected)) {
-                            return Colors.white;
-                          }
-                          return Colors.black87;
-                        }),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // 2. Team A Setup
-            Text(isDoubles ? "TEAM A (Top Court)" : "PLAYER A (Top Court)", 
-                style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 8),
-            _buildTextField(_pA1Controller, isDoubles ? "Player 1 Name" : "Player Name", Icons.person),
-            if (isDoubles) ...[
+  
+              const SizedBox(height: 24),
+  
+              // 2. Team A Setup
+              Text(isDoubles ? "TEAM A (Top Court)" : "PLAYER A (Top Court)", 
+                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
-              _buildTextField(_pA2Controller, "Player 2 Name", Icons.person_outline),
-            ],
-
-            const SizedBox(height: 24),
-
-            // 3. Team B Setup
-            Text(isDoubles ? "TEAM B (Bottom Court)" : "PLAYER B (Bottom Court)", 
-                style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
-             const SizedBox(height: 8),
-            _buildTextField(_pB1Controller, isDoubles ? "Player 1 Name" : "Player Name", Icons.person),
-            if (isDoubles) ...[
-              const SizedBox(height: 8),
-              _buildTextField(_pB2Controller, "Player 2 Name", Icons.person_outline),
-            ],
-
-            const SizedBox(height: 48),
-
-            // 4. Start Button
-            SizedBox(
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _startGame,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 5,
-                ),
-                child: const Text(
-                  "START MATCH",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+              _buildTextField(_pA1Controller, isDoubles ? "Player 1 Name" : "Player Name", Icons.person),
+              if (isDoubles) ...[
+                const SizedBox(height: 8),
+                _buildTextField(_pA2Controller, "Player 2 Name", Icons.person_outline),
+              ],
+  
+              const SizedBox(height: 24),
+  
+              // 3. Team B Setup
+              Text(isDoubles ? "TEAM B (Bottom Court)" : "PLAYER B (Bottom Court)", 
+                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+               const SizedBox(height: 8),
+              _buildTextField(_pB1Controller, isDoubles ? "Player 1 Name" : "Player Name", Icons.person),
+              if (isDoubles) ...[
+                const SizedBox(height: 8),
+                _buildTextField(_pB2Controller, "Player 2 Name", Icons.person_outline),
+              ],
+  
+              const SizedBox(height: 48),
+  
+              // 4. Start Button
+              SizedBox(
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _startGame,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 5,
+                  ),
+                  child: const Text(
+                    "START MATCH",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

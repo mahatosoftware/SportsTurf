@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../features/coin_toss/coin_toss_screen.dart';
 
 import '../features/tennis/ui/tennis_setup_screen.dart';
@@ -6,6 +7,7 @@ import '../features/tennis/ui/tennis_setup_screen.dart';
 import '../features/badminton/ui/badminton_setup_screen.dart';
 
 import '../features/table_tennis/ui/table_tennis_setup_screen.dart';
+import '../features/cricket/ui/cricket_setup_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -71,6 +73,27 @@ class HomeScreen extends StatelessWidget {
                    context,
                    MaterialPageRoute(builder: (context) => const TableTennisSetupScreen()),
                  );
+              },
+            ),
+            _buildFeatureCard(
+              context,
+              title: "Cricket Scorer",
+              icon: Icons.sports_cricket, 
+              color: Colors.blueAccent,
+              onTap: () {
+                 Navigator.push(
+                   context,
+                   MaterialPageRoute(builder: (context) => const CricketSetupScreen()),
+                 );
+              },
+            ),
+             _buildFeatureCard(
+              context,
+              title: "Exit App",
+              icon: Icons.exit_to_app, 
+              color: Colors.redAccent,
+              onTap: () {
+                 SystemNavigator.pop();
               },
             ),
           ],

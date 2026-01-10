@@ -109,13 +109,15 @@ class _TableTennisScoreScreenState extends State<TableTennisScoreScreen> {
           IconButton(icon: const Icon(Icons.refresh), onPressed: _showResetDialog)
         ],
       ),
-      body: Center(
-        child: TableTennisCourtCard(
-          matchState: _machine.state,
-          onScoreA: () { _machine.scorePoint(TTPlayer.playerA); _update(); },
-          onScoreB: () { _machine.scorePoint(TTPlayer.playerB); _update(); },
-          onUndo: () { _machine.undo(); _update(); },
-          onToggleSide: () { _machine.toggleServeSide(); _update(); },
+      body: SafeArea(
+        child: Center(
+          child: TableTennisCourtCard(
+            matchState: _machine.state,
+            onScoreA: () { _machine.scorePoint(TTPlayer.playerA); _update(); },
+            onScoreB: () { _machine.scorePoint(TTPlayer.playerB); _update(); },
+            onUndo: () { _machine.undo(); _update(); },
+            onToggleSide: () { _machine.toggleServeSide(); _update(); },
+          ),
         ),
       ),
     );

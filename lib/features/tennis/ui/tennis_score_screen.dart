@@ -63,41 +63,43 @@ class _TennisScoreScreenState extends State<TennisScoreScreen> {
           )
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: TennisCourtCard(
-                matchState: _machine.state,
-                onScoreA: () {
-                  _machine.scorePoint(Player.playerA);
-                  _update();
-                },
-                onScoreB: () {
-                  _machine.scorePoint(Player.playerB);
-                  _update();
-                },
-                onUndo: () {
-                  _machine.undo();
-                  _update();
-                },
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: TennisCourtCard(
+                  matchState: _machine.state,
+                  onScoreA: () {
+                    _machine.scorePoint(Player.playerA);
+                    _update();
+                  },
+                  onScoreB: () {
+                    _machine.scorePoint(Player.playerB);
+                    _update();
+                  },
+                  onUndo: () {
+                    _machine.undo();
+                    _update();
+                  },
+                ),
               ),
             ),
-          ),
-          
-          // Simple Legend
-          const Padding(
-            padding: EdgeInsets.only(bottom: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                 // _LegendItem(color: Colors.yellowAccent, label: "Server"), // Icon is now on court
-                 _LegendItem(color: Colors.white, label: "Point"),
-                 _LegendItem(color: Colors.orangeAccent, label: "Game/Set"),
-              ],
-            ),
-          )
-        ],
+            
+            // Simple Legend
+            const Padding(
+              padding: EdgeInsets.only(bottom: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                   // _LegendItem(color: Colors.yellowAccent, label: "Server"), // Icon is now on court
+                   _LegendItem(color: Colors.white, label: "Point"),
+                   _LegendItem(color: Colors.orangeAccent, label: "Game/Set"),
+                ],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
