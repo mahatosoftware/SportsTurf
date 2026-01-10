@@ -5,6 +5,8 @@ import '../features/tennis/ui/tennis_setup_screen.dart';
 
 import '../features/badminton/ui/badminton_setup_screen.dart';
 
+import '../features/table_tennis/ui/table_tennis_setup_screen.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -50,7 +52,7 @@ class HomeScreen extends StatelessWidget {
             _buildFeatureCard(
               context,
               title: "Badminton",
-              icon: Icons.sports_tennis_rounded, // Use similar icon but distinct color
+              icon: Icons.sports_tennis_rounded, 
               color: Colors.teal,
               onTap: () {
                  Navigator.push(
@@ -61,12 +63,14 @@ class HomeScreen extends StatelessWidget {
             ),
              _buildFeatureCard(
               context,
-              title: "Scoreboard",
-              icon: Icons.scoreboard,
-              color: Colors.blue,
+              title: "Table Tennis",
+              icon: Icons.sports_baseball, // Placeholder for Ping Pong Ball
+              color: Colors.blue[800]!,
               onTap: () {
-                 // TODO
-                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Coming Soon!")));
+                 Navigator.push(
+                   context,
+                   MaterialPageRoute(builder: (context) => const TableTennisSetupScreen()),
+                 );
               },
             ),
           ],

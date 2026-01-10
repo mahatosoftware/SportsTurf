@@ -13,22 +13,25 @@ class BadmintonMatchState {
   final int gamesWonA;
   final int gamesWonB;
   
-  final BadmintonPlayer server; // Current server (Team A or B context)
+  // History of completed sets: List of {A: 21, B: 19}
+  final List<Map<String, int>> setHistory;
   
-  final int setsToWin; // Usually 2 (Best of 3)
+  final BadmintonPlayer server; 
+  final int setsToWin; 
   final bool isMatchComplete;
   final BadmintonPlayer? matchWinner;
 
   const BadmintonMatchState({
     required this.matchType,
     required this.playerA1Name,
-    this.playerA2Name = "",
+    required this.playerA2Name,
     required this.playerB1Name,
-    this.playerB2Name = "",
+    required this.playerB2Name,
     required this.scoreA,
     required this.scoreB,
     required this.gamesWonA,
     required this.gamesWonB,
+    required this.setHistory,
     required this.server,
     required this.setsToWin,
     this.isMatchComplete = false,
@@ -54,6 +57,7 @@ class BadmintonMatchState {
       scoreB: 0,
       gamesWonA: 0,
       gamesWonB: 0,
+      setHistory: [],
       server: startingServer,
       setsToWin: setsToWin,
     );
@@ -64,6 +68,7 @@ class BadmintonMatchState {
     int? scoreB,
     int? gamesWonA,
     int? gamesWonB,
+    List<Map<String, int>>? setHistory,
     BadmintonPlayer? server,
     bool? isMatchComplete,
     BadmintonPlayer? matchWinner,
@@ -78,6 +83,7 @@ class BadmintonMatchState {
       scoreB: scoreB ?? this.scoreB,
       gamesWonA: gamesWonA ?? this.gamesWonA,
       gamesWonB: gamesWonB ?? this.gamesWonB,
+      setHistory: setHistory ?? this.setHistory,
       server: server ?? this.server,
       setsToWin: setsToWin,
       isMatchComplete: isMatchComplete ?? this.isMatchComplete,

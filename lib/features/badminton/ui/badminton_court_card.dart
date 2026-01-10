@@ -19,7 +19,7 @@ class BadmintonCourtCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
-      aspectRatio: 0.65, // Standard Mobile Portrait
+      aspectRatio: 0.65, 
       child: LayoutBuilder(
         builder: (context, constraints) {
           final w = constraints.maxWidth;
@@ -29,18 +29,6 @@ class BadmintonCourtCard extends StatelessWidget {
           Offset? indicatorPos;
 
            if (activeBox != null) {
-            // Calculate center of the highlighted box to place the shuttlecock
-            // We need to map the internal coordinates from Painter to here or just approximate
-            // Painter logic:
-            // TL(0): Left-Top
-            // TR(1): Right-Top
-            // BL(2): Left-Bottom
-            // BR(3): Right-Bottom
-            
-            // NOTE: The painter logic has margins inside, but here we just need relative positions (0.25, 0.75 etc)
-            // Top Y Center: Approximately 25% down (centered in top half service zone)
-            // Bottom Y Center: Approximately 75% down
-            
             double cyTop = h * 0.25;
             double cyBot = h * 0.75;
             double cxLeft = w * 0.25;
@@ -57,7 +45,7 @@ class BadmintonCourtCard extends StatelessWidget {
           return Container(
             margin: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF2E7D32), // Court Green
+              color: const Color(0xFF2E7D32), 
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(color: Colors.black.withValues(alpha:0.3), blurRadius: 8, offset: const Offset(0, 4))
@@ -88,7 +76,6 @@ class BadmintonCourtCard extends StatelessWidget {
                             BadmintonPlayer.playerA,
                             matchState.scoreA,
                             matchState.gamesWonA,
-                            activeBox == 0 || activeBox == 1 // Is Serving
                           ),
                         ),
                       ),
@@ -103,7 +90,6 @@ class BadmintonCourtCard extends StatelessWidget {
                             BadmintonPlayer.playerB,
                             matchState.scoreB,
                             matchState.gamesWonB,
-                            activeBox == 2 || activeBox == 3 // Is Serving
                           ),
                         ),
                       ),
@@ -116,7 +102,7 @@ class BadmintonCourtCard extends StatelessWidget {
                    Positioned(
                      left: indicatorPos.dx - 16,
                      top: indicatorPos.dy - 16,
-                     child: const Icon(Icons.sports_tennis, // Placeholder for Shuttlecock
+                     child: const Icon(Icons.sports_tennis, 
                         color: Colors.white, size: 32, shadows: [Shadow(blurRadius: 10, color: Colors.yellowAccent)]),
                    ),
                    
@@ -157,7 +143,23 @@ class BadmintonCourtCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPlayerSection(BadmintonPlayer player, int score, int games, bool isServing) {
+  Widget _buildPlayerSection(BadmintonPlayer player, int score, int setsWon) {
+    // Generate previous set scores string
+    // Filter history for this player? No, show score like "21-15, 18-21"
+    // Wait, usually we show history for the played sets.
+    // Let's just create a string of previous sets results for THIS player.
+    // e.g. for Player A: "21, 15"
+    
+    List<String> historyStrings = [];
+    for (var setScore in matchState.setHistory) {
+      if (player == BadmintonPlayer.playerA) {
+        historyStrings.add("${setScore['A']}");
+      } else {
+        historyStrings.add("${setScore['B']}");
+      }
+    }
+    String historyText = historyStrings.join(" - ");
+
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -171,17 +173,28 @@ class BadmintonCourtCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           
-          // Score
+          // Current Score
           Text(
             "$score",
             style: const TextStyle(color: Colors.white, fontSize: 72, fontWeight: FontWeight.w900, shadows: [Shadow(blurRadius: 5, color: Colors.black26)]),
           ),
           
-          // Games
+          // Sets & History
           Container(
-             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-             decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(12)),
-             child: Text("GAMES: $games", style: const TextStyle(color: Colors.white70)),
+             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+             decoration: BoxDecoration(color: Colors.black38, borderRadius: BorderRadius.circular(16)),
+             child: Row(
+               mainAxisSize: MainAxisSize.min,
+               children: [
+                 Text("SETS: $setsWon", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                 if (historyText.isNotEmpty) ...[
+                   const SizedBox(width: 8),
+                   Container(width: 1, height: 16, color: Colors.white54),
+                   const SizedBox(width: 8),
+                   Text(historyText, style: const TextStyle(color: Colors.white70)),
+                 ]
+               ],
+             ),
           ),
         ],
       ),
@@ -190,24 +203,6 @@ class BadmintonCourtCard extends StatelessWidget {
 
   int? _calculateActiveServiceBox(BadmintonMatchState state) {
     if (state.isMatchComplete) return null;
-    
-    // BWF Rules:
-    // Even Score -> Right Court
-    // Odd Score -> Left Court
-    // Player A (Top) Facing Down: 
-    //   Right Court is Viewer's LEFT (since they face down). WAIT.
-    //   Let's check "Right Service Court". 
-    //   Standard diagram: 
-    //   Top Player (A): Right Service Court is Top-Left (from viewer). Left Service Court is Top-Right.
-    //   Bottom Player (B): Right Service Court is Bottom-Right. Left Service Court is Bottom-Left.
-    
-    // Server A:
-    //   Even: Top-Left (Index 0)
-    //   Odd: Top-Right (Index 1)
-    
-    // Server B:
-    //   Even: Bottom-Right (Index 3)
-    //   Odd: Bottom-Left (Index 2)
     
     int score = state.server == BadmintonPlayer.playerA ? state.scoreA : state.scoreB;
     bool isEven = (score % 2 == 0);

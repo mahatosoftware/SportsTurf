@@ -32,21 +32,18 @@ class BadmintonStateMachine {
     int newScoreB = _currentState.scoreB;
     BadmintonPlayer nextServer = _currentState.server;
 
-    // Rally Scoring: Winner gets a point
+    // Rally Scoring
     if (winner == BadmintonPlayer.playerA) {
       newScoreA++;
-      nextServer = BadmintonPlayer.playerA; // Winner serves
+      nextServer = BadmintonPlayer.playerA; 
     } else {
       newScoreB++;
-      nextServer = BadmintonPlayer.playerB; // Winner serves
+      nextServer = BadmintonPlayer.playerB; 
     }
 
-    // Check Game Win
     if (_checkGameWin(newScoreA, newScoreB, winner == BadmintonPlayer.playerA)) {
-       // Game Won
-       _processGameWin(winner);
+       _processGameWin(winner, newScoreA, newScoreB);
     } else {
-       // Continue Game
        _currentState = _currentState.copyWith(
          scoreA: newScoreA,
          scoreB: newScoreB,
@@ -59,18 +56,16 @@ class BadmintonStateMachine {
     int winnerScore = winnerIsA ? scoreA : scoreB;
     int loserScore = winnerIsA ? scoreB : scoreA;
 
-    // Rule 1: Reach 21, lead by 2
     if (winnerScore >= 21 && (winnerScore - loserScore) >= 2) {
       return true;
     }
-    // Rule 2: Reach 30 (Hard Cap)
     if (winnerScore >= 30) {
       return true;
     }
     return false;
   }
 
-  void _processGameWin(BadmintonPlayer winner) {
+  void _processGameWin(BadmintonPlayer winner, int finalScoreA, int finalScoreB) {
     int newGamesA = _currentState.gamesWonA;
     int newGamesB = _currentState.gamesWonB;
 
@@ -79,25 +74,20 @@ class BadmintonStateMachine {
     } else {
       newGamesB++;
     }
+    
+    // Record History
+    final currentHistory = List<Map<String, int>>.from(_currentState.setHistory);
+    currentHistory.add({'A': finalScoreA, 'B': finalScoreB});
 
-    // Check Match Win
-    if (newGamesA >= _currentState.setsToWin) {
+    if (newGamesA >= _currentState.setsToWin || newGamesB >= _currentState.setsToWin) {
       _currentState = _currentState.copyWith(
-        scoreA: winner == BadmintonPlayer.playerA ? _currentState.scoreA + 1 : _currentState.scoreA,
-        scoreB: winner == BadmintonPlayer.playerB ? _currentState.scoreB + 1 : _currentState.scoreB,
+        scoreA: finalScoreA, // Freeze final score
+        scoreB: finalScoreB,
         gamesWonA: newGamesA,
         gamesWonB: newGamesB,
+        setHistory: currentHistory,
         isMatchComplete: true,
-        matchWinner: BadmintonPlayer.playerA,
-      );
-    } else if (newGamesB >= _currentState.setsToWin) {
-      _currentState = _currentState.copyWith(
-        scoreA: winner == BadmintonPlayer.playerA ? _currentState.scoreA + 1 : _currentState.scoreA,
-        scoreB: winner == BadmintonPlayer.playerB ? _currentState.scoreB + 1 : _currentState.scoreB,
-        gamesWonA: newGamesA,
-        gamesWonB: newGamesB,
-        isMatchComplete: true,
-        matchWinner: BadmintonPlayer.playerB,
+        matchWinner: newGamesA > newGamesB ? BadmintonPlayer.playerA : BadmintonPlayer.playerB,
       );
     } else {
       // New Set
@@ -106,7 +96,7 @@ class BadmintonStateMachine {
         gamesWonB: newGamesB,
         scoreA: 0,
         scoreB: 0,
-        // The winner of the previous game serves first in the next game
+        setHistory: currentHistory,
         server: winner,
       );
     }
