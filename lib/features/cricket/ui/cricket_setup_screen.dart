@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'cricket_score_screen.dart';
+import '../../../core/database/database_helper.dart';
+import '../../../core/models/player.dart';
 
 class CricketSetupScreen extends StatefulWidget {
   const CricketSetupScreen({super.key});
@@ -16,24 +18,47 @@ class _CricketSetupScreenState extends State<CricketSetupScreen> {
   // Squads
   final List<String> _squadA = [];
   final List<String> _squadB = [];
-  final TextEditingController _playerAController = TextEditingController();
-  final TextEditingController _playerBController = TextEditingController();
+  
+  // Available Players
+  List<Player> _availablePlayers = [];
+  bool _isLoadingPlayers = true;
+  
+  // Selection State
+  Player? _selectedPlayerA;
+  Player? _selectedPlayerB;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPlayers();
+  }
+
+  Future<void> _loadPlayers() async {
+    final players = await DatabaseHelper.instance.getPlayers();
+    setState(() {
+      _availablePlayers = players;
+      _isLoadingPlayers = false; 
+    });
+  }
 
   @override
   void dispose() {
     _teamAController.dispose();
     _teamBController.dispose();
-    _playerAController.dispose();
-    _playerBController.dispose();
     super.dispose();
   }
   
-  void _addPlayer(List<String> squad, TextEditingController controller) {
-    if (controller.text.trim().isNotEmpty) {
-      setState(() {
-        squad.add(controller.text.trim());
-        controller.clear();
-      });
+  void _addPlayerToSquad(List<String> squad, Player? player) {
+    if (player != null) {
+      if (!squad.contains(player.name)) {
+        setState(() {
+          squad.add(player.name);
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("${player.name} is already in the squad!"))
+        );
+      }
     }
   }
   
@@ -48,6 +73,13 @@ class _CricketSetupScreenState extends State<CricketSetupScreen> {
     String teamB = _teamBController.text.trim();
     if (teamA.isEmpty) teamA = "Team A";
     if (teamB.isEmpty) teamB = "Team B";
+
+    if (_squadA.isEmpty || _squadB.isEmpty) {
+       ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please add at least one player to each squad."))
+        );
+        return;
+    }
 
     Navigator.push(context, MaterialPageRoute(
       builder: (context) => CricketScoreScreen(
@@ -82,13 +114,39 @@ class _CricketSetupScreenState extends State<CricketSetupScreen> {
               ),
               const SizedBox(height: 24),
               
-              // Team A
-               _buildTeamSection("TEAM A (Batting First)", _teamAController, _playerAController, _squadA),
-               
-               const SizedBox(height: 24),
-               
-               // Team B
-               _buildTeamSection("TEAM B (Bowling First)", _teamBController, _playerBController, _squadB),
+              if (_isLoadingPlayers)
+                 const Center(child: CircularProgressIndicator())
+              else if (_availablePlayers.isEmpty)
+                const Card(
+                  color: Colors.orangeAccent,
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text("No players found. Please add players from the Home Screen > Players.", textAlign: TextAlign.center),
+                  ),
+                )
+              else ...[
+                   // Team A
+                   _buildTeamSection(
+                     "TEAM A (Batting First)", 
+                     _teamAController, 
+                     _squadA, 
+                     _selectedPlayerA, 
+                     (p) => setState(() => _selectedPlayerA = p),
+                     () => _addPlayerToSquad(_squadA, _selectedPlayerA)
+                   ),
+                   
+                   const SizedBox(height: 24),
+                   
+                   // Team B
+                   _buildTeamSection(
+                     "TEAM B (Bowling First)", 
+                     _teamBController, 
+                     _squadB, 
+                     _selectedPlayerB, 
+                     (p) => setState(() => _selectedPlayerB = p),
+                     () => _addPlayerToSquad(_squadB, _selectedPlayerB)
+                   ),
+              ],
               
               const SizedBox(height: 32),
               
@@ -117,7 +175,7 @@ class _CricketSetupScreenState extends State<CricketSetupScreen> {
               SizedBox(
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _startMatch,
+                  onPressed: (_availablePlayers.isNotEmpty) ? _startMatch : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green, 
                     foregroundColor: Colors.white,
@@ -134,7 +192,14 @@ class _CricketSetupScreenState extends State<CricketSetupScreen> {
     );
   }
   
-  Widget _buildTeamSection(String title, TextEditingController teamNameCtrl, TextEditingController playerCtrl, List<String> squad) {
+  Widget _buildTeamSection(
+    String title, 
+    TextEditingController teamNameCtrl, 
+    List<String> squad,
+    Player? selectedPlayer,
+    ValueChanged<Player?> onPlayerChanged,
+    VoidCallback onAddPlayer
+  ) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -165,16 +230,32 @@ class _CricketSetupScreenState extends State<CricketSetupScreen> {
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: playerCtrl,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(labelText: "Add Player Name", border: OutlineInputBorder(), isDense: true),
-                    onSubmitted: (_) => _addPlayer(squad, playerCtrl),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.grey),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<Player>(
+                        value: selectedPlayer,
+                        hint: const Text("Select Player"),
+                        isExpanded: true,
+                        items: _availablePlayers.map((Player player) {
+                          return DropdownMenuItem<Player>(
+                            value: player,
+                            child: Text(player.name),
+                          );
+                        }).toList(),
+                        onChanged: onPlayerChanged,
+                      ),
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
                 IconButton(
                   icon: const Icon(Icons.add_circle, color: Colors.green, size: 32),
-                  onPressed: () => _addPlayer(squad, playerCtrl),
+                  onPressed: onAddPlayer,
                 )
               ],
             )

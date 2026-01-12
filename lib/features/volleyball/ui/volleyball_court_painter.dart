@@ -18,7 +18,7 @@ class VolleyballCourtPainter extends CustomPainter {
     final courtColor = const Color(0xFFE0C39C); // Wood color
     final outOfBoundsColor = const Color(0xFF4A9E88); // Green sport floor
     final lineColor = Colors.white;
-    final highlightColor = Colors.yellow.withOpacity(0.3);
+    final highlightColor = Colors.yellow.withValues(alpha: 0.3);
 
     // Draw background (Out of bounds)
     final bgPaint = Paint()..color = outOfBoundsColor;
@@ -90,7 +90,7 @@ class VolleyballCourtPainter extends CustomPainter {
 
     // Draw Net (Visual representation)
     final netPaint = Paint()
-      ..color = Colors.white.withOpacity(0.8)
+      ..color = Colors.white.withValues(alpha: 0.8)
       ..strokeWidth = 6.0;
     canvas.drawLine(Offset(left - 5, centerY), Offset(right + 5, centerY), netPaint);
   }

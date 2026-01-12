@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../../core/models/match_result.dart';
+import '../../core/models/player.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -18,7 +19,12 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(
+      path, 
+      version: 2, 
+      onCreate: _createDB,
+      onUpgrade: _onUpgrade,
+    );
   }
 
   Future _createDB(Database db, int version) async {
@@ -39,6 +45,27 @@ CREATE TABLE match_history (
   details $textType
   )
 ''');
+
+    await db.execute('''
+CREATE TABLE players ( 
+  id $idType, 
+  name $textType
+  )
+''');
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
+      const textType = 'TEXT NOT NULL';
+      
+      await db.execute('''
+CREATE TABLE players ( 
+  id $idType, 
+  name $textType
+  )
+''');
+    }
   }
 
   Future<int> insertMatch(MatchResult match) async {
@@ -69,6 +96,39 @@ CREATE TABLE match_history (
   Future<int> deleteAllMatches() async {
     final db = await instance.database;
     return await db.delete('match_history');
+  }
+
+  // Player CRUD Operations
+  Future<int> insertPlayer(Player player) async {
+    final db = await instance.database;
+    return await db.insert('players', player.toMap());
+  }
+
+  Future<List<Player>> getPlayers() async {
+    final db = await instance.database;
+    final orderBy = 'name ASC';
+    final result = await db.query('players', orderBy: orderBy);
+
+    return result.map((json) => Player.fromMap(json)).toList();
+  }
+
+  Future<int> updatePlayer(Player player) async {
+    final db = await instance.database;
+    return await db.update(
+      'players',
+      player.toMap(),
+      where: 'id = ?',
+      whereArgs: [player.id],
+    );
+  }
+
+  Future<int> deletePlayer(int id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'players',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<void> close() async {

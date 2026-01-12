@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../models/tennis_match_state.dart';
+import '../models/tennis_match_state.dart' hide Player;
 import 'tennis_score_screen.dart';
+import '../../../core/database/database_helper.dart';
+import '../../../core/models/player.dart';
 
 class TennisSetupScreen extends StatefulWidget {
   const TennisSetupScreen({super.key});
@@ -12,30 +14,38 @@ class TennisSetupScreen extends StatefulWidget {
 class _TennisSetupScreenState extends State<TennisSetupScreen> {
   MatchType _matchType = MatchType.singles;
   
-  // Controllers
-  final TextEditingController _pA1Controller = TextEditingController(); // Singles: Player A, Doubles: Team A Player 1
-  final TextEditingController _pA2Controller = TextEditingController(); // Doubles: Team A Player 2
-  final TextEditingController _pB1Controller = TextEditingController(); // Singles: Player B, Doubles: Team B Player 1
-  final TextEditingController _pB2Controller = TextEditingController(); // Doubles: Team B Player 2
+  List<Player> _availablePlayers = [];
+  bool _isLoadingPlayers = true;
+
+  Player? _selectedA1;
+  Player? _selectedA2;
+  Player? _selectedB1;
+  Player? _selectedB2;
 
   @override
-  void dispose() {
-    _pA1Controller.dispose();
-    _pA2Controller.dispose();
-    _pB1Controller.dispose();
-    _pB2Controller.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadPlayers();
+  }
+
+  Future<void> _loadPlayers() async {
+    final players = await DatabaseHelper.instance.getPlayers();
+    setState(() {
+      _availablePlayers = players;
+      _isLoadingPlayers = false; 
+    });
   }
 
   void _startGame() {
-    // Basic validation or defaults
-    String a1 = _pA1Controller.text.trim().toUpperCase();
-    String a2 = _pA2Controller.text.trim().toUpperCase();
-    String b1 = _pB1Controller.text.trim().toUpperCase();
-    String b2 = _pB2Controller.text.trim().toUpperCase();
+    String a1 = _selectedA1?.name.trim().toUpperCase() ?? "PLAYER A";
+    String a2 = _selectedA2?.name.trim().toUpperCase() ?? "";
+    String b1 = _selectedB1?.name.trim().toUpperCase() ?? "PLAYER B";
+    String b2 = _selectedB2?.name.trim().toUpperCase() ?? "";
 
-    if (a1.isEmpty) a1 = "Player A";
-    if (b1.isEmpty) b1 = "Player B";
+    if (_matchType == MatchType.singles) {
+      if (_selectedA1 == null) a1 = "PLAYER A";
+      if (_selectedB1 == null) b1 = "PLAYER B";
+    }
 
     Navigator.push(
       context,
@@ -110,16 +120,16 @@ class _TennisSetupScreenState extends State<TennisSetupScreen> {
                           });
                         },
                         style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                            if (states.contains(WidgetState.selected)) {
+                          backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                            if (states.contains(MaterialState.selected)) {
                               return Colors.green; // Green for selected
                             }
                             return Colors.grey[200]!; // Light grey for unselected
                           }),
-                          foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                             if (states.contains(WidgetState.selected)) {
-                              return Colors.white;
-                            }
+                          foregroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                             if (states.contains(MaterialState.selected)) {
+                               return Colors.white;
+                             }
                             return Colors.black87;
                           }),
                         ),
@@ -130,27 +140,59 @@ class _TennisSetupScreenState extends State<TennisSetupScreen> {
               ),
   
               const SizedBox(height: 24),
-  
-              // 2. Team A Setup
-              Text(isDoubles ? "TEAM A (Top Court)" : "PLAYER A (Top Court)", 
-                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 8),
-              _buildTextField(_pA1Controller, isDoubles ? "Player 1 Name" : "Player Name", Icons.person),
-              if (isDoubles) ...[
-                const SizedBox(height: 8),
-                _buildTextField(_pA2Controller, "Player 2 Name", Icons.person_outline),
-              ],
-  
-              const SizedBox(height: 24),
-  
-              // 3. Team B Setup
-              Text(isDoubles ? "TEAM B (Bottom Court)" : "PLAYER B (Bottom Court)", 
-                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
-               const SizedBox(height: 8),
-              _buildTextField(_pB1Controller, isDoubles ? "Player 1 Name" : "Player Name", Icons.person),
-              if (isDoubles) ...[
-                const SizedBox(height: 8),
-                _buildTextField(_pB2Controller, "Player 2 Name", Icons.person_outline),
+
+              if (_isLoadingPlayers)
+                 const Center(child: CircularProgressIndicator())
+              else if (_availablePlayers.isEmpty)
+                const Card(
+                  color: Colors.orangeAccent,
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text("No players found. Please add players from the Home Screen > Players.", textAlign: TextAlign.center),
+                  ),
+                )
+              else ...[
+                  // 2. Team A Setup
+                  Text(isDoubles ? "TEAM A (Top Court)" : "PLAYER A (Top Court)", 
+                      style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  _buildPlayerDropdown(
+                    isDoubles ? "Player 1 Name" : "Player Name", 
+                    _selectedA1, 
+                    (Player? newValue) => setState(() => _selectedA1 = newValue),
+                    Icons.person
+                  ),
+                  if (isDoubles) ...[
+                    const SizedBox(height: 8),
+                    _buildPlayerDropdown(
+                      "Player 2 Name", 
+                      _selectedA2, 
+                      (Player? newValue) => setState(() => _selectedA2 = newValue),
+                      Icons.person_outline
+                    ),
+                  ],
+      
+                  const SizedBox(height: 24),
+      
+                  // 3. Team B Setup
+                  Text(isDoubles ? "TEAM B (Bottom Court)" : "PLAYER B (Bottom Court)", 
+                      style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+                   const SizedBox(height: 8),
+                  _buildPlayerDropdown(
+                    isDoubles ? "Player 1 Name" : "Player Name", 
+                    _selectedB1, 
+                    (Player? newValue) => setState(() => _selectedB1 = newValue),
+                    Icons.person
+                  ),
+                  if (isDoubles) ...[
+                    const SizedBox(height: 8),
+                    _buildPlayerDropdown(
+                      "Player 2 Name", 
+                      _selectedB2, 
+                      (Player? newValue) => setState(() => _selectedB2 = newValue),
+                      Icons.person_outline
+                    ),
+                  ],
               ],
   
               const SizedBox(height: 48),
@@ -159,7 +201,7 @@ class _TennisSetupScreenState extends State<TennisSetupScreen> {
               SizedBox(
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _startGame,
+                  onPressed: (_availablePlayers.isNotEmpty) ? _startGame : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
@@ -179,28 +221,37 @@ class _TennisSetupScreenState extends State<TennisSetupScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, IconData icon) {
-    return TextField(
-      controller: controller,
-      textCapitalization: TextCapitalization.characters,
-      style: const TextStyle(color: Colors.black87),
-      decoration: InputDecoration(
-        labelText: hint,
-        labelStyle: const TextStyle(color: Colors.grey),
-        prefixIcon: Icon(icon, color: Colors.grey),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[300]!)
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[300]!)
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.green, width: 2)
+  Widget _buildPlayerDropdown(
+    String hint, 
+    Player? selectedPlayer, 
+    ValueChanged<Player?> onChanged, 
+    IconData icon
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<Player>(
+          value: selectedPlayer,
+          hint: Row(
+            children: [
+              Icon(icon, color: Colors.grey),
+              const SizedBox(width: 8),
+              Text(hint, style: const TextStyle(color: Colors.grey)),
+            ],
+          ),
+          isExpanded: true,
+          items: _availablePlayers.map((Player player) {
+            return DropdownMenuItem<Player>(
+              value: player,
+              child: Text(player.name),
+            );
+          }).toList(),
+          onChanged: onChanged,
         ),
       ),
     );

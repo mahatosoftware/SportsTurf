@@ -85,50 +85,53 @@ class _CoinTossScreenState extends State<CoinTossScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedBuilder(
-              animation: _animation,
-              builder: (context, child) {
-                final double value = _animation.value;
-                // Calculate rotation Y
-                // We want to show the "Front" image when 0 < val < pi/2 or 3pi/2 < val < 2pi
-                // "Back" image when pi/2 < val < 3pi/2
-                
-                // Normalize value to 0..2pi
-                double normalized = value % (2 * pi);
-                bool showFront = normalized < (pi / 2) || normalized > (3 * pi / 2);
-                
-                return Transform(
-                  transform: Matrix4.identity()
-                    ..setEntry(3, 2, 0.001) // perspective
-                    ..rotateX(value),
-                  alignment: Alignment.center,
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      border: Border.all(width: 4, color: Colors.orangeAccent),
-                      boxShadow: [
-                         BoxShadow(
-                            color: Color.fromARGB(50, 0, 0, 0),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                         )
-                      ]
-                    ),
+            GestureDetector(
+              onTap: _controller.isAnimating ? null : _tossCoin,
+              child: AnimatedBuilder(
+                animation: _animation,
+                builder: (context, child) {
+                  final double value = _animation.value;
+                  // Calculate rotation Y
+                  // We want to show the "Front" image when 0 < val < pi/2 or 3pi/2 < val < 2pi
+                  // "Back" image when pi/2 < val < 3pi/2
+                  
+                  // Normalize value to 0..2pi
+                  double normalized = value % (2 * pi);
+                  bool showFront = normalized < (pi / 2) || normalized > (3 * pi / 2);
+                  
+                  return Transform(
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, 0.001) // perspective
+                      ..rotateX(value),
                     alignment: Alignment.center,
-                    child: ClipOval(
-                      child: Image.asset(
-                        showFront 
-                            ? "assets/images/heads.png" 
-                            : "assets/images/tails.png",
-                        fit: BoxFit.cover,
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        border: Border.all(width: 4, color: Colors.orangeAccent),
+                        boxShadow: [
+                           BoxShadow(
+                              color: Color.fromARGB(50, 0, 0, 0),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                           )
+                        ]
+                      ),
+                      alignment: Alignment.center,
+                      child: ClipOval(
+                        child: Image.asset(
+                          showFront 
+                              ? "assets/images/heads.png" 
+                              : "assets/images/tails.png",
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 50),
             Text(

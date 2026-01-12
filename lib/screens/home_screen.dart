@@ -9,6 +9,7 @@ import '../features/badminton/ui/badminton_setup_screen.dart';
 import '../features/table_tennis/ui/table_tennis_setup_screen.dart';
 import '../features/cricket/ui/cricket_setup_screen.dart';
 import '../features/volleyball/ui/volleyball_setup_screen.dart';
+import '../features/players/players_screen.dart';
 import 'scorecard_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -110,6 +111,18 @@ class HomeScreen extends StatelessWidget {
                  Navigator.push(
                    context,
                    MaterialPageRoute(builder: (context) => const ScorecardScreen()),
+                 );
+              },
+            ),
+             _buildFeatureCard(
+              context,
+              title: "Players",
+              icon: Icons.people,
+              color: Colors.indigo,
+              onTap: () {
+                 Navigator.push(
+                   context,
+                   MaterialPageRoute(builder: (context) => const PlayersScreen()),
                  );
               },
             ),

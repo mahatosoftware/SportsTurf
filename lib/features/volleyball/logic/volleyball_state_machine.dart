@@ -7,11 +7,13 @@ class VolleyballStateMachine {
   VolleyballStateMachine({
     VolleyballTeam startingServer = VolleyballTeam.teamA,
     int setsToWin = 3,
+    int pointsPerSet = 25,
     String teamAName = "Team A",
     String teamBName = "Team B",
   }) : _currentState = VolleyballMatchState.initial(
           startingServer: startingServer,
           setsToWin: setsToWin,
+          pointsPerSet: pointsPerSet,
           teamAName: teamAName,
           teamBName: teamBName,
         );
@@ -25,7 +27,6 @@ class VolleyballStateMachine {
 
     int newScoreA = _currentState.scoreA;
     int newScoreB = _currentState.scoreB;
-    VolleyballTeam currentServer = _currentState.servingTeam;
 
     // Rally scoring: Point awarded to winner of rally regardless of who served
     if (winner == VolleyballTeam.teamA) {
@@ -35,15 +36,17 @@ class VolleyballStateMachine {
     }
 
     // Determine next server
-    // Rule: The team that wins the rally serves.
-    // If the receiving team wins the rally, they gain the serve (side-out).
     VolleyballTeam nextServer = winner;
 
     bool setWon = false;
-    // Standard set: 25 pts, win by 2
-    // Deciding set (5th set): 15 pts, win by 2
-    int pointsToWinSet = 25;
-    if (_currentState.currentSet == 5) {
+    
+    // Determine points to win current set
+    int pointsToWinSet = _currentState.pointsPerSet;
+    
+    // Special rule for 5th set (Deciding set) if playing Best of 5 standard (25pts)
+    // If user explicitly chose 15 points, then 5th set is also 15.
+    // If user chose 25 points (standard), 5th set is usually 15.
+    if (_currentState.setsToWin == 3 && _currentState.currentSet == 5 && _currentState.pointsPerSet == 25) {
       pointsToWinSet = 15;
     }
 

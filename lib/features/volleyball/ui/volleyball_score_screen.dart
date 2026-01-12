@@ -10,12 +10,14 @@ class VolleyballScoreScreen extends StatefulWidget {
   final String teamAName;
   final String teamBName;
   final int setsToWin;
+  final int pointsPerSet;
 
   const VolleyballScoreScreen({
     super.key,
     this.teamAName = "Team A",
     this.teamBName = "Team B",
     this.setsToWin = 3,
+    this.pointsPerSet = 25,
   });
 
   @override
@@ -32,6 +34,7 @@ class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
       teamAName: widget.teamAName,
       teamBName: widget.teamBName,
       setsToWin: widget.setsToWin,
+      pointsPerSet: widget.pointsPerSet,
     );
   }
 
@@ -86,10 +89,11 @@ class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
     final state = _stateMachine.state;
 
     return Scaffold(
-      backgroundColor: Colors.grey[900],
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Volleyball Scorer'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
@@ -183,7 +187,7 @@ class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
+                    color: Colors.black.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
@@ -196,7 +200,7 @@ class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
               // 5. Match Winner Overlay
               if (state.isMatchComplete)
                 Container(
-                  color: Colors.black.withOpacity(0.8),
+                  color: Colors.black.withValues(alpha: 0.8),
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -252,7 +256,7 @@ class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        splashColor: color.withOpacity(0.3),
+        splashColor: color.withValues(alpha: 0.3),
         child: Container(
           padding: const EdgeInsets.all(24),
           alignment: Alignment.center,
@@ -290,7 +294,7 @@ class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
           children: [
             Text(
               name,
-              style: TextStyle(color: color.withOpacity(0.9), fontSize: 20, fontWeight: FontWeight.w600),
+              style: TextStyle(color: color.withValues(alpha: 0.9), fontSize: 20, fontWeight: FontWeight.w600),
             ),
             Text(
               "$score",
@@ -298,7 +302,7 @@ class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
             ),
             Text(
               "Sets: $sets",
-              style: const TextStyle(color: Colors.white70, fontSize: 16),
+              style: const TextStyle(color: Colors.black54, fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ],
         ),

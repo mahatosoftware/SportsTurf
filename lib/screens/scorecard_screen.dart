@@ -31,6 +31,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
     // Optimistic UI update not strictly needed as we reload list from DB or snapshot, 
     // but Swipe Dismiss removes item from UI immediately so we must handle DB async
     await DatabaseHelper.instance.deleteMatch(id);
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Match deleted")),
     );
@@ -68,7 +69,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text("Scorecard"),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -173,12 +174,12 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
         });
         _loadMatches();
       },
-      selectedColor: Colors.deepPurple.withOpacity(0.2),
+      selectedColor: Colors.green.withValues(alpha: 0.2),
       labelStyle: TextStyle(
-        color: isSelected ? Colors.deepPurple : Colors.black87,
+        color: isSelected ? Colors.green : Colors.black87,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
       ),
-      checkmarkColor: Colors.deepPurple,
+      checkmarkColor: Colors.green,
     );
   }
 
@@ -238,7 +239,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: sportColor.withOpacity(0.1),
+          backgroundColor: sportColor.withValues(alpha: 0.1),
           child: Icon(sportIcon, color: sportColor),
         ),
         title: Text(

@@ -337,8 +337,8 @@ class _CricketScoreScreenState extends State<CricketScoreScreen> {
     await showDialog(
       context: context,
       barrierDismissible: !mandatory, // Cannot dismiss if mandatory
-      builder: (context) => WillPopScope(
-        onWillPop: () async => !mandatory, // Prevent back button if mandatory
+      builder: (context) => PopScope(
+        canPop: !mandatory, // Prevent back button if mandatory
         child: AlertDialog(
           title: Text(mandatory ? "End of Over: Select New Bowler" : "Change Bowler"),
           content: Column(

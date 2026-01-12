@@ -12,6 +12,7 @@ class VolleyballMatchState {
 
   // Configuration
   final int setsToWin; // Usually 3 (best of 5)
+  final int pointsPerSet; // 25 or 15
   final String teamAName;
   final String teamBName;
   
@@ -28,6 +29,7 @@ class VolleyballMatchState {
     this.matchWinner,
     this.isMatchComplete = false,
     this.setsToWin = 3,
+    this.pointsPerSet = 25,
     required this.teamAName,
     required this.teamBName,
     this.setHistory = const [],
@@ -36,6 +38,7 @@ class VolleyballMatchState {
   factory VolleyballMatchState.initial({
     VolleyballTeam startingServer = VolleyballTeam.teamA,
     int setsToWin = 3,
+    int pointsPerSet = 25,
     String teamAName = "Team A",
     String teamBName = "Team B",
   }) {
@@ -47,6 +50,7 @@ class VolleyballMatchState {
       currentSet: 1,
       servingTeam: startingServer,
       setsToWin: setsToWin,
+      pointsPerSet: pointsPerSet,
       teamAName: teamAName,
       teamBName: teamBName,
       setHistory: const [],
@@ -63,6 +67,7 @@ class VolleyballMatchState {
     VolleyballTeam? matchWinner,
     bool? isMatchComplete,
     int? setsToWin,
+    int? pointsPerSet,
     String? teamAName,
     String? teamBName,
     List<String>? setHistory,
@@ -77,6 +82,7 @@ class VolleyballMatchState {
       matchWinner: matchWinner ?? this.matchWinner,
       isMatchComplete: isMatchComplete ?? this.isMatchComplete,
       setsToWin: setsToWin ?? this.setsToWin,
+      pointsPerSet: pointsPerSet ?? this.pointsPerSet,
       teamAName: teamAName ?? this.teamAName,
       teamBName: teamBName ?? this.teamBName,
       setHistory: setHistory ?? this.setHistory,
