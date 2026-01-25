@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import '../core/database/database_helper.dart';
 import '../core/models/match_result.dart';
+import '../features/cricket/ui/cricket_stats_screen.dart';
+import '../features/cricket/models/cricket_match_state.dart';
 
 class ScorecardScreen extends StatefulWidget {
   const ScorecardScreen({super.key});
@@ -238,6 +240,20 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
+        onTap: () {
+          if (match.sport.toLowerCase() == 'cricket') {
+            try {
+              final details = jsonDecode(match.details);
+              if (details is Map && details.containsKey('cricket_state')) {
+                 final stateMap = details['cricket_state'];
+                 final state = CricketMatchState.fromMap(stateMap);
+                 Navigator.push(context, MaterialPageRoute(builder: (c) => CricketStatsScreen(state: state)));
+              }
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error opening stats")));
+            }
+          }
+        },
         leading: CircleAvatar(
           backgroundColor: sportColor.withValues(alpha: 0.1),
           child: Icon(sportIcon, color: sportColor),

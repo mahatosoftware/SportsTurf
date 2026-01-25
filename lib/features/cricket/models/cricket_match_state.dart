@@ -48,6 +48,34 @@ class CricketPlayer {
       wickets: wickets ?? this.wickets,
     );
   }
+  
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'runs': runs,
+      'ballsFaced': ballsFaced,
+      'fours': fours,
+      'sixes': sixes,
+      'isOut': isOut,
+      'ballsBowled': ballsBowled,
+      'runsConceded': runsConceded,
+      'wickets': wickets,
+    };
+  }
+
+  factory CricketPlayer.fromMap(Map<String, dynamic> map) {
+    return CricketPlayer(
+      name: map['name'],
+      runs: map['runs'] ?? 0,
+      ballsFaced: map['ballsFaced'] ?? 0,
+      fours: map['fours'] ?? 0,
+      sixes: map['sixes'] ?? 0,
+      isOut: map['isOut'] ?? false,
+      ballsBowled: map['ballsBowled'] ?? 0,
+      runsConceded: map['runsConceded'] ?? 0,
+      wickets: map['wickets'] ?? 0,
+    );
+  }
 }
 
 class CricketMatchState {
@@ -109,11 +137,20 @@ class CricketMatchState {
     List<String> squadA = const [],
     List<String> squadB = const [],
     int totalOvers = 5,
+    String? battingFirst, // Optional: defaults to Team A
   }) {
-    // Default initial players if squads empty, else pick first few
-    String s1 = squadA.isNotEmpty ? squadA[0] : "Striker";
-    String s2 = squadA.length > 1 ? squadA[1] : "Non-Striker";
-    String b1 = squadB.isNotEmpty ? squadB[0] : "Bowler";
+    // Determine Batting and Bowling Teams
+    String battingName = battingFirst ?? teamAName;
+    String bowlingName = (battingName == teamAName) ? teamBName : teamAName;
+    
+    // Determine correct squads for batting and bowling
+    List<String> battingSquad = (battingName == teamAName) ? squadA : squadB;
+    List<String> bowlingSquad = (battingName == teamAName) ? squadB : squadA;
+
+    // Default initial players
+    String s1 = battingSquad.isNotEmpty ? battingSquad[0] : "Striker";
+    String s2 = battingSquad.length > 1 ? battingSquad[1] : "Non-Striker";
+    String b1 = bowlingSquad.isNotEmpty ? bowlingSquad[0] : "Bowler";
     
     // Initialize stats map
     Map<String, CricketPlayer> stats = {};
@@ -132,8 +169,8 @@ class CricketMatchState {
       squadB: squadB,
       totalOvers: totalOvers,
       currentInning: 1,
-      battingTeamName: teamAName,
-      bowlingTeamName: teamBName,
+      battingTeamName: battingName,
+      bowlingTeamName: bowlingName,
       totalRuns: 0,
       wicketsLost: 0,
       oversCompleted: 0,
@@ -191,6 +228,60 @@ class CricketMatchState {
       isMatchComplete: isMatchComplete ?? this.isMatchComplete,
       matchResult: matchResult ?? this.matchResult,
       playerStats: playerStats ?? this.playerStats,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'teamAName': teamAName,
+      'teamBName': teamBName,
+      'squadA': squadA,
+      'squadB': squadB,
+      'totalOvers': totalOvers,
+      'currentInning': currentInning,
+      'battingTeamName': battingTeamName,
+      'bowlingTeamName': bowlingTeamName,
+      'totalRuns': totalRuns,
+      'wicketsLost': wicketsLost,
+      'oversCompleted': oversCompleted,
+      'ballsInOver': ballsInOver,
+      'striker': striker.toMap(),
+      'nonStriker': nonStriker.toMap(),
+      'bowler': bowler.toMap(),
+      'targetRuns': targetRuns,
+      'ballHistory': ballHistory,
+      'dismissedPlayers': dismissedPlayers,
+      'isMatchComplete': isMatchComplete,
+      'matchResult': matchResult,
+      'playerStats': playerStats.map((k, v) => MapEntry(k, v.toMap())),
+    };
+  }
+
+  factory CricketMatchState.fromMap(Map<String, dynamic> map) {
+    return CricketMatchState(
+      teamAName: map['teamAName'] ?? "Team A",
+      teamBName: map['teamBName'] ?? "Team B",
+      squadA: List<String>.from(map['squadA'] ?? []),
+      squadB: List<String>.from(map['squadB'] ?? []),
+      totalOvers: map['totalOvers'] ?? 5,
+      currentInning: map['currentInning'] ?? 1,
+      battingTeamName: map['battingTeamName'] ?? "Team A",
+      bowlingTeamName: map['bowlingTeamName'] ?? "Team B",
+      totalRuns: map['totalRuns'] ?? 0,
+      wicketsLost: map['wicketsLost'] ?? 0,
+      oversCompleted: map['oversCompleted'] ?? 0,
+      ballsInOver: map['ballsInOver'] ?? 0,
+      striker: CricketPlayer.fromMap(map['striker']),
+      nonStriker: CricketPlayer.fromMap(map['nonStriker']),
+      bowler: CricketPlayer.fromMap(map['bowler']),
+      targetRuns: map['targetRuns'],
+      ballHistory: List<String>.from(map['ballHistory'] ?? []),
+      dismissedPlayers: List<String>.from(map['dismissedPlayers'] ?? []),
+      isMatchComplete: map['isMatchComplete'] ?? false,
+      matchResult: map['matchResult'],
+      playerStats: (map['playerStats'] as Map<String, dynamic>?)?.map(
+        (k, v) => MapEntry(k, CricketPlayer.fromMap(v)),
+      ) ?? {},
     );
   }
 }

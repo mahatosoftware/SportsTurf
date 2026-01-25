@@ -81,6 +81,7 @@ class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Match Result Saved!")),
       );
+      Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
 

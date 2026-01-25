@@ -26,6 +26,8 @@ class _CricketSetupScreenState extends State<CricketSetupScreen> {
   // Selection State
   Player? _selectedPlayerA;
   Player? _selectedPlayerB;
+  
+  String _battingFirst = 'A'; // 'A' or 'B'
 
   @override
   void initState() {
@@ -88,6 +90,7 @@ class _CricketSetupScreenState extends State<CricketSetupScreen> {
         squadA: _squadA,
         squadB: _squadB,
         overs: _overs,
+        battingFirst: _battingFirst == 'A' ? teamA : teamB,
       )
     ));
   }
@@ -127,7 +130,7 @@ class _CricketSetupScreenState extends State<CricketSetupScreen> {
               else ...[
                    // Team A
                    _buildTeamSection(
-                     "TEAM A (Batting First)", 
+                     "TEAM A", 
                      _teamAController, 
                      _squadA, 
                      _selectedPlayerA, 
@@ -139,12 +142,44 @@ class _CricketSetupScreenState extends State<CricketSetupScreen> {
                    
                    // Team B
                    _buildTeamSection(
-                     "TEAM B (Bowling First)", 
+                     "TEAM B", 
                      _teamBController, 
                      _squadB, 
                      _selectedPlayerB, 
                      (p) => setState(() => _selectedPlayerB = p),
                      () => _addPlayerToSquad(_squadB, _selectedPlayerB)
+                   ),
+
+                   const SizedBox(height: 24),
+                   
+                   // Toss / Batting Choice
+                   const Text("Who Bats First?", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
+                   const SizedBox(height: 8),
+                   SegmentedButton<String>(
+                     segments: const [
+                       ButtonSegment(value: 'A', label: Text('Team A')),
+                       ButtonSegment(value: 'B', label: Text('Team B')),
+                     ],
+                     selected: {_battingFirst},
+                     onSelectionChanged: (Set<String> newSelection) {
+                       setState(() {
+                         _battingFirst = newSelection.first;
+                       });
+                     },
+                     style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                          if (states.contains(WidgetState.selected)) {
+                            return Colors.green;
+                          }
+                          return Colors.grey[200]!;
+                        }),
+                        foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                          if (states.contains(WidgetState.selected)) {
+                            return Colors.white;
+                          }
+                          return Colors.black;
+                        }),
+                     ),
                    ),
               ],
               

@@ -12,6 +12,7 @@ class CricketScoreScreen extends StatefulWidget {
   final List<String> squadA;
   final List<String> squadB;
   final int overs;
+  final String? battingFirst;
 
   const CricketScoreScreen({
     super.key,
@@ -20,6 +21,7 @@ class CricketScoreScreen extends StatefulWidget {
     this.squadA = const [],
     this.squadB = const [],
     required this.overs,
+    this.battingFirst,
   });
 
   @override
@@ -43,6 +45,7 @@ class _CricketScoreScreenState extends State<CricketScoreScreen> {
       squadA: widget.squadA,
       squadB: widget.squadB,
       totalOvers: widget.overs,
+      battingFirst: widget.battingFirst,
     );
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -406,9 +409,8 @@ class _CricketScoreScreenState extends State<CricketScoreScreen> {
       winner: state.matchResult ?? "Draw", 
       details: jsonEncode({
         'resultDescription': state.matchResult,
-        'totalOvers': state.totalOvers,
         'finalScore': "${state.totalRuns}/${state.wicketsLost} (${state.oversCompleted}.${state.ballsInOver})",
-        // Ideally we'd have full scorecard here.
+        'cricket_state': state.toMap(),
       }),
     );
 
@@ -420,6 +422,10 @@ class _CricketScoreScreenState extends State<CricketScoreScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Match Result Saved!")),
+      );
+      Navigator.pushReplacement(
+        context, 
+        MaterialPageRoute(builder: (context) => CricketStatsScreen(state: state))
       );
     }
   }

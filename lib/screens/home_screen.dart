@@ -10,6 +10,9 @@ import '../features/table_tennis/ui/table_tennis_setup_screen.dart';
 import '../features/cricket/ui/cricket_setup_screen.dart';
 import '../features/volleyball/ui/volleyball_setup_screen.dart';
 import '../features/players/players_screen.dart';
+import '../features/tournament/ui/tournament_setup_screen.dart';
+import '../features/tournament/ui/tournament_history_screen.dart';
+import '../features/teams/ui/teams_screen.dart';
 import 'scorecard_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -116,6 +119,18 @@ class HomeScreen extends StatelessWidget {
             ),
              _buildFeatureCard(
               context,
+              title: "Teams",
+              icon: Icons.groups,
+              color: Colors.indigo,
+              onTap: () {
+                 Navigator.push(
+                   context,
+                   MaterialPageRoute(builder: (context) => const TeamsScreen()),
+                 );
+              },
+            ),
+             _buildFeatureCard(
+              context,
               title: "Players",
               icon: Icons.people,
               color: Colors.indigo,
@@ -123,6 +138,30 @@ class HomeScreen extends StatelessWidget {
                  Navigator.push(
                    context,
                    MaterialPageRoute(builder: (context) => const PlayersScreen()),
+                 );
+              },
+            ),
+             _buildFeatureCard(
+              context,
+              title: "Create\nTournament",
+              icon: Icons.emoji_events,
+              color: Colors.amberAccent[700]!,
+              onTap: () {
+                 Navigator.push(
+                   context,
+                   MaterialPageRoute(builder: (context) => const TournamentSetupScreen()),
+                 );
+              },
+            ),
+             _buildFeatureCard(
+              context,
+              title: "Update\nTournaments",
+              icon: Icons.history,
+              color: Colors.blueGrey,
+              onTap: () {
+                 Navigator.push(
+                   context,
+                   MaterialPageRoute(builder: (context) => const TournamentHistoryScreen()),
                  );
               },
             ),
@@ -160,6 +199,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               title,
+              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

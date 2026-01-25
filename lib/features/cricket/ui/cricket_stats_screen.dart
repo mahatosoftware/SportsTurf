@@ -12,8 +12,16 @@ class CricketStatsScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text("Match Statistics"),
-          backgroundColor: Colors.blue[900],
+          backgroundColor: Colors.green, // Changed to green
           foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.home),
+              onPressed: () {
+                Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+              },
+            ),
+          ],
           bottom: const TabBar(
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
@@ -69,12 +77,12 @@ class CricketStatsScreen extends StatelessWidget {
         children: [
           // Match Result Card
           Card(
-            color: Colors.blue[50],
+            color: Colors.green[50], // Changed to green[50]
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
-                  Text(winner, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue[900])),
+                  Text(winner, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green[900])), // Changed to green[900]
                   const SizedBox(height: 12),
                   Text("${state.battingTeamName}: ${state.totalRuns}/${state.wicketsLost} (${state.oversCompleted}.${state.ballsInOver})",
                       style: const TextStyle(fontSize: 18)),
@@ -116,12 +124,12 @@ class CricketStatsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            Icon(icon, color: Colors.blue[800], size: 32),
+            Icon(icon, color: Colors.green[800], size: 32), // Changed to green[800]
             const SizedBox(height: 8),
             Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
             const SizedBox(height: 4),
             Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), textAlign: TextAlign.center, maxLines: 1),
-            Text(stat, style: TextStyle(color: Colors.blue[800], fontWeight: FontWeight.bold)),
+            Text(stat, style: TextStyle(color: Colors.green[800], fontWeight: FontWeight.bold)), // Changed to green[800]
           ],
         ),
       ),
@@ -180,7 +188,7 @@ class CricketStatsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Batting", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+          const Text("Batting", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)), // Changed to green
           const SizedBox(height: 8),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -209,7 +217,7 @@ class CricketStatsScreen extends StatelessWidget {
           ),
           
           const SizedBox(height: 24),
-          const Text("Bowling", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+          const Text("Bowling", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)), // Changed to green
           const SizedBox(height: 8),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,

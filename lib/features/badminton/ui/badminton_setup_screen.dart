@@ -152,7 +152,8 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
                   "Player 1", 
                   _selectedA1, 
                   (Player? newValue) => setState(() => _selectedA1 = newValue),
-                  Icons.person
+                  Icons.person,
+                  excludedPlayers: [_selectedA2, _selectedB1, _selectedB2],
                 ),
                 if (isDoubles) ...[
                   const SizedBox(height: 8),
@@ -160,7 +161,8 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
                     "Player 2", 
                     _selectedA2, 
                     (Player? newValue) => setState(() => _selectedA2 = newValue),
-                    Icons.person_outline
+                    Icons.person_outline,
+                    excludedPlayers: [_selectedA1, _selectedB1, _selectedB2],
                   ),
                 ],
 
@@ -174,7 +176,8 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
                   "Player 1", 
                   _selectedB1, 
                   (Player? newValue) => setState(() => _selectedB1 = newValue),
-                  Icons.person
+                  Icons.person,
+                  excludedPlayers: [_selectedA1, _selectedA2, _selectedB2],
                 ),
                  if (isDoubles) ...[
                    const SizedBox(height: 8),
@@ -182,7 +185,8 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
                     "Player 2", 
                     _selectedB2, 
                     (Player? newValue) => setState(() => _selectedB2 = newValue),
-                    Icons.person_outline
+                    Icons.person_outline,
+                    excludedPlayers: [_selectedA1, _selectedA2, _selectedB1],
                   ),
                  ],
             ],
@@ -269,8 +273,17 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
     String hint, 
     Player? selectedPlayer, 
     ValueChanged<Player?> onChanged, 
-    IconData icon
-  ) {
+    IconData icon, {
+    List<Player?> excludedPlayers = const [],
+  }) {
+    // Filter available players
+    final available = _availablePlayers.where((p) {
+      if (excludedPlayers.any((excluded) => excluded?.id == p.id)) {
+        return false;
+      }
+      return true;
+    }).toList();
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -289,7 +302,7 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
             ],
           ),
           isExpanded: true,
-          items: _availablePlayers.map((Player player) {
+          items: available.map((Player player) {
             return DropdownMenuItem<Player>(
               value: player,
               child: Text(player.name),

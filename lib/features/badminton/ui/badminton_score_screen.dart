@@ -143,6 +143,7 @@ class _BadmintonScoreScreenState extends State<BadmintonScoreScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Match Result Saved!")),
       );
+      Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
 

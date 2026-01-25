@@ -143,6 +143,7 @@ class _TableTennisSetupScreenState extends State<TableTennisSetupScreen> {
                     isDoubles ? "Player 1 Name" : "Player Name", 
                     _selectedA1, 
                     (Player? newValue) => setState(() => _selectedA1 = newValue),
+                    excludedPlayers: [_selectedA2, _selectedB1, _selectedB2],
                   ),
                   if (isDoubles) ...[
                     const SizedBox(height: 8),
@@ -150,6 +151,7 @@ class _TableTennisSetupScreenState extends State<TableTennisSetupScreen> {
                       "Player 2 Name", 
                       _selectedA2, 
                       (Player? newValue) => setState(() => _selectedA2 = newValue),
+                      excludedPlayers: [_selectedA1, _selectedB1, _selectedB2],
                     ),
                   ],
                    
@@ -163,6 +165,7 @@ class _TableTennisSetupScreenState extends State<TableTennisSetupScreen> {
                     isDoubles ? "Player 1 Name" : "Player Name", 
                     _selectedB1, 
                     (Player? newValue) => setState(() => _selectedB1 = newValue),
+                    excludedPlayers: [_selectedA1, _selectedA2, _selectedB2],
                   ),
                   if (isDoubles) ...[
                     const SizedBox(height: 8),
@@ -170,6 +173,7 @@ class _TableTennisSetupScreenState extends State<TableTennisSetupScreen> {
                       "Player 2 Name", 
                       _selectedB2, 
                       (Player? newValue) => setState(() => _selectedB2 = newValue),
+                      excludedPlayers: [_selectedA1, _selectedA2, _selectedB1],
                     ),
                   ],
               ],
@@ -216,8 +220,17 @@ class _TableTennisSetupScreenState extends State<TableTennisSetupScreen> {
   Widget _buildPlayerDropdown(
     String hint, 
     Player? selectedPlayer, 
-    ValueChanged<Player?> onChanged
-  ) {
+    ValueChanged<Player?> onChanged, {
+    List<Player?> excludedPlayers = const [],
+  }) {
+    // Filter available players
+    final available = _availablePlayers.where((p) {
+      if (excludedPlayers.any((excluded) => excluded?.id == p.id)) {
+        return false;
+      }
+      return true;
+    }).toList();
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -230,7 +243,7 @@ class _TableTennisSetupScreenState extends State<TableTennisSetupScreen> {
           value: selectedPlayer,
           hint: Text(hint, style: const TextStyle(color: Colors.grey)),
           isExpanded: true,
-          items: _availablePlayers.map((Player player) {
+          items: available.map((Player player) {
             return DropdownMenuItem<Player>(
               value: player,
               child: Text(player.name),

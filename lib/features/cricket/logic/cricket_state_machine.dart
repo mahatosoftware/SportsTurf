@@ -10,12 +10,14 @@ class CricketStateMachine {
     List<String> squadA = const [],
     List<String> squadB = const [],
     int totalOvers = 5,
+    String? battingFirst,
   }) : _currentState = CricketMatchState.initial(
           teamAName: teamAName,
           teamBName: teamBName,
           squadA: squadA,
           squadB: squadB,
           totalOvers: totalOvers,
+          battingFirst: battingFirst,
         );
 
   CricketMatchState get state => _currentState;

@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../../core/models/match_result.dart';
 import '../../core/models/player.dart';
+import '../../features/tournament/models/tournament.dart';
+import '../../features/tournament/models/team.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -21,7 +24,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path, 
-      version: 2, 
+      version: 4, 
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -52,6 +55,25 @@ CREATE TABLE players (
   name $textType
   )
 ''');
+
+    await db.execute('''
+CREATE TABLE tournaments (
+  id $textType PRIMARY KEY,
+  name $textType,
+  sport $textType,
+  status $textType,
+  date $textType,
+  data $textType
+)
+''');
+
+    await db.execute('''
+CREATE TABLE teams (
+  id $textType PRIMARY KEY,
+  name $textType,
+  player_ids $textType
+)
+''');
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -64,6 +86,31 @@ CREATE TABLE players (
   id $idType, 
   name $textType
   )
+''');
+    }
+
+    if (oldVersion < 3) {
+      const textType = 'TEXT NOT NULL';
+      await db.execute('''
+CREATE TABLE tournaments (
+  id $textType PRIMARY KEY,
+  name $textType,
+  sport $textType,
+  status $textType,
+  date $textType,
+  data $textType
+)
+''');
+    }
+
+    if (oldVersion < 4) {
+      const textType = 'TEXT NOT NULL';
+      await db.execute('''
+CREATE TABLE teams (
+  id $textType PRIMARY KEY,
+  name $textType,
+  player_ids $textType
+)
 ''');
     }
   }
@@ -134,5 +181,94 @@ CREATE TABLE players (
   Future<void> close() async {
     final db = await instance.database;
     db.close();
+  }
+
+  // Tournament CRUD
+  Future<int> insertTournament(Tournament tournament) async {
+    final db = await instance.database;
+    final data = jsonEncode(tournament.toMap());
+    
+    return await db.insert(
+      'tournaments',
+      {
+        'id': tournament.id,
+        'name': tournament.name,
+        'sport': tournament.sportType,
+        'status': tournament.status.name,
+        'date': tournament.createdAt.toIso8601String(),
+        'data': data,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+  
+  Future<List<Tournament>> getTournaments({String? sport}) async {
+    final db = await instance.database;
+    final orderBy = 'date DESC';
+    
+    final result = sport != null
+        ? await db.query('tournaments', where: 'sport = ?', whereArgs: [sport], orderBy: orderBy)
+        : await db.query('tournaments', orderBy: orderBy);
+        
+    return result.map((row) {
+      final dataStr = row['data'] as String;
+      final dataMap = jsonDecode(dataStr) as Map<String, dynamic>;
+      return Tournament.fromMap(dataMap);
+    }).toList();
+  }
+  
+  Future<int> updateTournament(Tournament tournament) async {
+     return await insertTournament(tournament); // Replace works as update due to conflictAlgorithm
+  }
+  
+  Future<int> deleteTournament(String id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'tournaments',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // Persistent Teams CRUD
+  Future<int> insertTeam(Team team) async {
+    final db = await instance.database;
+    return await db.insert(
+      'teams',
+      {
+        'id': team.id,
+        'name': team.name,
+        'player_ids': jsonEncode(team.playerIds),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Team>> getTeams() async {
+    final db = await instance.database;
+    final orderBy = 'name ASC';
+    
+    final result = await db.query('teams', orderBy: orderBy);
+        
+    return result.map((row) {
+      return Team(
+        id: row['id'] as String,
+        name: row['name'] as String,
+        playerIds: (jsonDecode(row['player_ids'] as String) as List).cast<String>(),
+      );
+    }).toList();
+  }
+
+  Future<int> updateTeam(Team team) async {
+    return await insertTeam(team);
+  }
+
+  Future<int> deleteTeam(String id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'teams',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }
