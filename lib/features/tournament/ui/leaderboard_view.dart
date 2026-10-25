@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/bottom_navigation_padding.dart';
 import '../models/tournament.dart';
 import '../models/standing.dart';
 import '../models/match.dart';
@@ -15,8 +16,10 @@ class LeaderboardView extends StatelessWidget {
     List<Standing> standings = _calculateStandings();
 
     return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
+      padding: NavigationPadding.listInsets(context, horizontal: 8, top: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
         columns: const [
           DataColumn(label: Text('Rank')),
           DataColumn(label: Text('Team')),
@@ -44,6 +47,7 @@ class LeaderboardView extends StatelessWidget {
              ],
            );
         }).toList(),
+      ),
       ),
     );
   }

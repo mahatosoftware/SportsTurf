@@ -1,6 +1,38 @@
 import 'team.dart';
 
-enum MatchStatus { upcoming, live, completed }
+enum MatchStatus {
+  upcoming,
+  live,
+  completed,
+  ready,
+  postponed,
+  cancelled,
+  walkover,
+  paused,
+}
+
+extension MatchStatusExt on MatchStatus {
+  String get displayName {
+    switch (this) {
+      case MatchStatus.upcoming:
+        return 'Scheduled';
+      case MatchStatus.ready:
+        return 'Ready';
+      case MatchStatus.live:
+        return 'Live';
+      case MatchStatus.paused:
+        return 'Paused';
+      case MatchStatus.completed:
+        return 'Completed';
+      case MatchStatus.postponed:
+        return 'Postponed';
+      case MatchStatus.cancelled:
+        return 'Cancelled';
+      case MatchStatus.walkover:
+        return 'Walkover';
+    }
+  }
+}
 
 class TournamentMatch {
   final String id;
@@ -18,6 +50,15 @@ class TournamentMatch {
   final String? loserNextMatchId; // ID of the match the loser goes to (for Double Elimination)
   
   final DateTime? scheduledTime; // Scheduled Date and Time
+  final String? venueCourt; // Court 1, Pitch A, Table 2, etc.
+  final String? venueId;
+  final String? playingAreaId;
+  final int durationMinutes;
+  final String? assignedScorerId; // Scorer UID
+  final String? assignedRefereeId; // Referee UID
+  final String? statusReason; // Reason for postponement, walkover, or cancellation
+  final Map<String, dynamic>? liveMatchData; // In-progress sport scoring snapshot
+  final List<Map<String, dynamic>> eventHistory; // Chronological score & correction events
 
   // Virtual Team objects for UI convenience (populated at runtime)
   Team? participantA;
@@ -38,7 +79,26 @@ class TournamentMatch {
     this.participantA,
     this.participantB,
     this.scheduledTime,
-  });
+    this.venueCourt,
+    this.venueId,
+    this.playingAreaId,
+    this.durationMinutes = 60,
+    this.assignedScorerId,
+    this.assignedRefereeId,
+    this.statusReason,
+    this.liveMatchData,
+    List<Map<String, dynamic>>? eventHistory,
+  }) : eventHistory = eventHistory ?? [];
+
+  bool canScore(String? userId) {
+    if (userId == null) return false;
+    return assignedScorerId != null && assignedScorerId == userId;
+  }
+
+  bool isAssignedReferee(String? userId) {
+    if (userId == null) return false;
+    return assignedRefereeId == userId;
+  }
 
   TournamentMatch copyWith({
     String? id,
@@ -55,6 +115,15 @@ class TournamentMatch {
     Team? participantA,
     Team? participantB,
     DateTime? scheduledTime,
+    String? venueCourt,
+    String? venueId,
+    String? playingAreaId,
+    int? durationMinutes,
+    String? assignedScorerId,
+    String? assignedRefereeId,
+    String? statusReason,
+    Map<String, dynamic>? liveMatchData,
+    List<Map<String, dynamic>>? eventHistory,
   }) {
     return TournamentMatch(
       id: id ?? this.id,
@@ -71,6 +140,15 @@ class TournamentMatch {
       participantA: participantA ?? this.participantA,
       participantB: participantB ?? this.participantB,
       scheduledTime: scheduledTime ?? this.scheduledTime,
+      venueCourt: venueCourt ?? this.venueCourt,
+      venueId: venueId ?? this.venueId,
+      playingAreaId: playingAreaId ?? this.playingAreaId,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
+      assignedScorerId: assignedScorerId ?? this.assignedScorerId,
+      assignedRefereeId: assignedRefereeId ?? this.assignedRefereeId,
+      statusReason: statusReason ?? this.statusReason,
+      liveMatchData: liveMatchData ?? this.liveMatchData,
+      eventHistory: eventHistory ?? this.eventHistory,
     );
   }
 
@@ -85,33 +163,77 @@ class TournamentMatch {
       'scoreB': scoreB,
       'winnerId': winnerId,
       'status': status.index,
+      'statusName': status.name,
       'nextMatchId': nextMatchId,
       'loserNextMatchId': loserNextMatchId,
       'scheduledTime': scheduledTime?.toIso8601String(),
-      // We don't necessarily need to serialize the full Team objects here if they are in the Tournament participants list,
-      // but it makes UI rendering easier if we include them or re-hydrate them.
-      // For now, let's Serialize them to be safe and self-contained.
+      'venueCourt': venueCourt,
+      if (venueId != null) 'venueId': venueId,
+      if (playingAreaId != null) 'playingAreaId': playingAreaId,
+      'durationMinutes': durationMinutes,
+      'assignedScorerId': assignedScorerId,
+      if (assignedRefereeId != null) 'assignedRefereeId': assignedRefereeId,
+      'statusReason': statusReason,
+      'liveMatchData': liveMatchData,
+      'eventHistory': eventHistory,
       'participantA': participantA?.toMap(),
       'participantB': participantB?.toMap(),
     };
   }
 
   factory TournamentMatch.fromMap(Map<String, dynamic> map) {
+    MatchStatus parseStatus() {
+      if (map['statusName'] is String) {
+        return MatchStatus.values.firstWhere(
+          (e) => e.name == map['statusName'],
+          orElse: () => MatchStatus.upcoming,
+        );
+      }
+      final idx = map['status'];
+      if (idx is int && idx >= 0 && idx < MatchStatus.values.length) {
+        return MatchStatus.values[idx];
+      }
+      return MatchStatus.upcoming;
+    }
+
+    DateTime? parseDate(dynamic val) {
+      if (val == null) return null;
+      if (val is DateTime) return val;
+      if (val is String) return DateTime.tryParse(val);
+      try {
+        final dynamic t = val;
+        return t.toDate();
+      } catch (_) {}
+      return null;
+    }
+
     return TournamentMatch(
-      id: map['id'],
-      round: map['round'],
-      matchNumber: map['matchNumber'],
+      id: map['id'] ?? '',
+      round: map['round'] ?? 1,
+      matchNumber: map['matchNumber'] ?? 1,
       participantAId: map['participantAId'],
       participantBId: map['participantBId'],
       scoreA: map['scoreA'],
       scoreB: map['scoreB'],
       winnerId: map['winnerId'],
-      status: MatchStatus.values[map['status'] ?? 0],
+      status: parseStatus(),
       nextMatchId: map['nextMatchId'],
       loserNextMatchId: map['loserNextMatchId'],
-      participantA: map['participantA'] != null ? Team.fromMap(map['participantA']) : null,
-      participantB: map['participantB'] != null ? Team.fromMap(map['participantB']) : null,
-      scheduledTime: map['scheduledTime'] != null ? DateTime.parse(map['scheduledTime']) : null,
+      scheduledTime: parseDate(map['scheduledTime']),
+      venueCourt: map['venueCourt'],
+      venueId: map['venueId'],
+      playingAreaId: map['playingAreaId'],
+      durationMinutes: map['durationMinutes'] ?? 60,
+      assignedScorerId: map['assignedScorerId'],
+      assignedRefereeId: map['assignedRefereeId'],
+      statusReason: map['statusReason'],
+      liveMatchData: map['liveMatchData'] is Map ? Map<String, dynamic>.from(map['liveMatchData']) : null,
+      eventHistory: (map['eventHistory'] as List<dynamic>?)
+              ?.map((e) => Map<String, dynamic>.from(e))
+              .toList() ??
+          [],
+      participantA: map['participantA'] != null ? Team.fromMap(Map<String, dynamic>.from(map['participantA'])) : null,
+      participantB: map['participantB'] != null ? Team.fromMap(Map<String, dynamic>.from(map['participantB'])) : null,
     );
   }
 }

@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/badminton_match_state.dart';
 import 'badminton_score_screen.dart';
-import '../../../core/database/database_helper.dart';
+import '../../../core/providers/repository_providers.dart';
+import '../../../core/widgets/bottom_navigation_padding.dart';
 import '../../../core/models/player.dart';
+import '../../tournament/models/team.dart';
 
-class BadmintonSetupScreen extends StatefulWidget {
+class BadmintonSetupScreen extends ConsumerStatefulWidget {
   const BadmintonSetupScreen({super.key});
 
   @override
-  State<BadmintonSetupScreen> createState() => _BadmintonSetupScreenState();
+  ConsumerState<BadmintonSetupScreen> createState() => _BadmintonSetupScreenState();
 }
 
-class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
+class _BadmintonSetupScreenState extends ConsumerState<BadmintonSetupScreen> {
   BadmintonMatchType _matchType = BadmintonMatchType.singles;
   
   List<Player> _availablePlayers = [];
+  List<Team> _availableTeams = [];
   bool _isLoadingPlayers = true;
 
   Player? _selectedA1;
@@ -32,11 +36,33 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
   }
 
   Future<void> _loadPlayers() async {
-    final players = await DatabaseHelper.instance.getPlayers();
-    setState(() {
-      _availablePlayers = players;
-      _isLoadingPlayers = false; // Add default selections if needed
-    });
+    final playersFuture = ref.read(playerRepositoryProvider).getPlayers();
+    final teamsFuture = ref.read(teamRepositoryProvider).getTeams();
+    final results = await Future.wait([playersFuture, teamsFuture]);
+    if (mounted) {
+      setState(() {
+        _availablePlayers = results[0] as List<Player>;
+        _availableTeams = results[1] as List<Team>;
+        _isLoadingPlayers = false;
+      });
+    }
+  }
+
+  void _selectTeamForDoubles(Team team, bool isSideA) {
+    final teamPlayerIds = team.playerIds.toSet();
+    final matchedPlayers = _availablePlayers.where((p) =>
+      teamPlayerIds.contains(p.id?.toString()) || teamPlayerIds.contains(p.name)).toList();
+    if (matchedPlayers.isNotEmpty) {
+      setState(() {
+        if (isSideA) {
+          _selectedA1 = matchedPlayers.isNotEmpty ? matchedPlayers[0] : null;
+          _selectedA2 = matchedPlayers.length > 1 ? matchedPlayers[1] : null;
+        } else {
+          _selectedB1 = matchedPlayers.isNotEmpty ? matchedPlayers[0] : null;
+          _selectedB2 = matchedPlayers.length > 1 ? matchedPlayers[1] : null;
+        }
+      });
+    }
   }
 
   void _startGame() {
@@ -81,7 +107,7 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: NavigationPadding.listInsets(context, horizontal: 24, top: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -145,8 +171,29 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
               )
             else ...[
                 // Team A
-                Text(isDoubles ? "TEAM A" : "PLAYER A", 
-                    style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(isDoubles ? "TEAM A" : "PLAYER A", 
+                        style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+                    if (isDoubles && _availableTeams.isNotEmpty)
+                      PopupMenuButton<Team>(
+                        tooltip: 'Select Team for Team A',
+                        child: const Row(
+                          children: [
+                            Icon(Icons.groups_outlined, size: 16, color: Colors.green),
+                            SizedBox(width: 4),
+                            Text('Pick Team', style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        onSelected: (team) => _selectTeamForDoubles(team, true),
+                        itemBuilder: (_) => _availableTeams.map((team) => PopupMenuItem(
+                          value: team,
+                          child: Text('${team.name} (${team.playerIds.length} players)'),
+                        )).toList(),
+                      ),
+                  ],
+                ),
                 const SizedBox(height: 8),
                 _buildPlayerDropdown(
                   "Player 1", 
@@ -169,8 +216,29 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
                 const SizedBox(height: 24),
 
                 // Team B
-                Text(isDoubles ? "TEAM B" : "PLAYER B", 
-                    style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(isDoubles ? "TEAM B" : "PLAYER B", 
+                        style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+                    if (isDoubles && _availableTeams.isNotEmpty)
+                      PopupMenuButton<Team>(
+                        tooltip: 'Select Team for Team B',
+                        child: const Row(
+                          children: [
+                            Icon(Icons.groups_outlined, size: 16, color: Colors.green),
+                            SizedBox(width: 4),
+                            Text('Pick Team', style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        onSelected: (team) => _selectTeamForDoubles(team, false),
+                        itemBuilder: (_) => _availableTeams.map((team) => PopupMenuItem(
+                          value: team,
+                          child: Text('${team.name} (${team.playerIds.length} players)'),
+                        )).toList(),
+                      ),
+                  ],
+                ),
                 const SizedBox(height: 8),
                  _buildPlayerDropdown(
                   "Player 1", 
@@ -262,6 +330,7 @@ class _BadmintonSetupScreenState extends State<BadmintonSetupScreen> {
                 child: const Text("START MATCH", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
             ),
+            const BottomNavSpacing(),
             ],
           ),
         ),

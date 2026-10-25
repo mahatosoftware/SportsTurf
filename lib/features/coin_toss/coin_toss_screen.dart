@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../core/widgets/bottom_navigation_padding.dart';
 
 class CoinTossScreen extends StatefulWidget {
   const CoinTossScreen({super.key});
@@ -81,10 +82,14 @@ class _CoinTossScreenState extends State<CoinTossScreen>
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+      body: SafeArea(
+        top: false,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: NavigationPadding.listInsets(context, horizontal: 24, top: 16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
             GestureDetector(
               onTap: _controller.isAnimating ? null : _tossCoin,
               child: AnimatedBuilder(
@@ -155,6 +160,8 @@ class _CoinTossScreenState extends State<CoinTossScreen>
             ),
           ],
         ),
+      ),
+      ),
       ),
     );
   }

@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/table_tennis_match_state.dart';
 import 'table_tennis_score_screen.dart';
-import '../../../core/database/database_helper.dart';
+import '../../../core/providers/repository_providers.dart';
+import '../../../core/widgets/bottom_navigation_padding.dart';
 import '../../../core/models/player.dart';
 
-class TableTennisSetupScreen extends StatefulWidget {
+class TableTennisSetupScreen extends ConsumerStatefulWidget {
   const TableTennisSetupScreen({super.key});
 
   @override
-  State<TableTennisSetupScreen> createState() => _TableTennisSetupScreenState();
+  ConsumerState<TableTennisSetupScreen> createState() => _TableTennisSetupScreenState();
 }
 
-class _TableTennisSetupScreenState extends State<TableTennisSetupScreen> {
+class _TableTennisSetupScreenState extends ConsumerState<TableTennisSetupScreen> {
   TTMatchType _matchType = TTMatchType.singles;
   
   List<Player> _availablePlayers = [];
@@ -31,11 +33,13 @@ class _TableTennisSetupScreenState extends State<TableTennisSetupScreen> {
   }
 
   Future<void> _loadPlayers() async {
-    final players = await DatabaseHelper.instance.getPlayers();
-    setState(() {
-      _availablePlayers = players;
-      _isLoadingPlayers = false; 
-    });
+    final players = await ref.read(playerRepositoryProvider).getPlayers();
+    if (mounted) {
+      setState(() {
+        _availablePlayers = players;
+        _isLoadingPlayers = false; 
+      });
+    }
   }
 
   void _startGame() {
@@ -74,7 +78,7 @@ class _TableTennisSetupScreenState extends State<TableTennisSetupScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: NavigationPadding.listInsets(context, horizontal: 24, top: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -209,7 +213,8 @@ class _TableTennisSetupScreenState extends State<TableTennisSetupScreen> {
                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
                    child: const Text("START MATCH", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                  ),
-               )
+               ),
+               const BottomNavSpacing(),
             ],
           ),
         ),

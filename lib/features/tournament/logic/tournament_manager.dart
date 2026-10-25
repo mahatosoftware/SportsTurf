@@ -82,8 +82,7 @@ class TournamentManager {
       // Handle Loser for Double Elim
       if (tournament.format == TournamentFormat.doubleElimination && match.loserNextMatchId != null) {
          // Logic for dropping loser to loser bracket
-         String loserId = (winnerId == match.participantAId) ? match.participantBId! : match.participantAId!;
-         // ... Similar logic to populate loser bracket match
+         // final loserId = (winnerId == match.participantAId) ? match.participantBId! : match.participantAId!;
       }
     }
 

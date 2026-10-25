@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/bottom_navigation_padding.dart';
 import '../models/tournament.dart';
 import '../models/match.dart';
 
@@ -42,6 +43,7 @@ class BracketView extends StatelessWidget {
                 ),
                 Expanded(
                   child: ListView.separated(
+                    padding: NavigationPadding.listInsets(context, horizontal: 0, top: 8),
                     itemCount: matches.length,
                     separatorBuilder: (ctx, i) => const SizedBox(height: 32),
                     itemBuilder: (ctx, i) {

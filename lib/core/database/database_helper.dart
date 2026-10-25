@@ -24,7 +24,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path, 
-      version: 4, 
+      version: 6, 
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -52,7 +52,10 @@ CREATE TABLE match_history (
     await db.execute('''
 CREATE TABLE players ( 
   id $idType, 
-  name $textType
+  name $textType,
+  contact TEXT,
+  seed INTEGER,
+  profilePhotoUrl TEXT
   )
 ''');
 
@@ -72,6 +75,16 @@ CREATE TABLE teams (
   id $textType PRIMARY KEY,
   name $textType,
   player_ids $textType
+)
+''');
+
+    await db.execute('''
+CREATE TABLE user_subscriptions (
+  userId $textType,
+  entityType $textType,
+  entityId $textType,
+  subscribedAt $textType,
+  PRIMARY KEY (userId, entityType, entityId)
 )
 ''');
   }
@@ -110,6 +123,30 @@ CREATE TABLE teams (
   id $textType PRIMARY KEY,
   name $textType,
   player_ids $textType
+)
+''');
+    }
+
+    if (oldVersion < 5) {
+      try {
+        await db.execute('ALTER TABLE players ADD COLUMN contact TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE players ADD COLUMN seed INTEGER');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE players ADD COLUMN profilePhotoUrl TEXT');
+      } catch (_) {}
+    }
+
+    if (oldVersion < 6) {
+      await db.execute('''
+CREATE TABLE IF NOT EXISTS user_subscriptions (
+  userId TEXT NOT NULL,
+  entityType TEXT NOT NULL,
+  entityId TEXT NOT NULL,
+  subscribedAt TEXT NOT NULL,
+  PRIMARY KEY (userId, entityType, entityId)
 )
 ''');
     }
@@ -269,6 +306,61 @@ CREATE TABLE teams (
       'teams',
       where: 'id = ?',
       whereArgs: [id],
+    );
+  }
+
+  // User Subscriptions (Leagues & Tournaments)
+  Future<int> insertSubscription({
+    required String userId,
+    required String entityType,
+    required String entityId,
+  }) async {
+    final db = await instance.database;
+    return await db.insert(
+      'user_subscriptions',
+      {
+        'userId': userId,
+        'entityType': entityType,
+        'entityId': entityId,
+        'subscribedAt': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<int> deleteSubscription({
+    required String userId,
+    required String entityType,
+    required String entityId,
+  }) async {
+    final db = await instance.database;
+    return await db.delete(
+      'user_subscriptions',
+      where: 'userId = ? AND entityType = ? AND entityId = ?',
+      whereArgs: [userId, entityType, entityId],
+    );
+  }
+
+  Future<List<String>> getSubscribedEntityIds({
+    required String userId,
+    required String entityType,
+  }) async {
+    final db = await instance.database;
+    final results = await db.query(
+      'user_subscriptions',
+      columns: ['entityId'],
+      where: 'userId = ? AND entityType = ?',
+      whereArgs: [userId, entityType],
+    );
+    return results.map((row) => row['entityId'] as String).toList();
+  }
+
+  Future<int> clearSubscriptionsForUser(String userId) async {
+    final db = await instance.database;
+    return await db.delete(
+      'user_subscriptions',
+      where: 'userId = ?',
+      whereArgs: [userId],
     );
   }
 }

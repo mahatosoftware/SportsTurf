@@ -1,46 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
-import '../core/database/database_helper.dart';
 import '../core/models/match_result.dart';
+import '../core/widgets/bottom_navigation_padding.dart';
+import '../core/providers/match_providers.dart';
 import '../features/cricket/ui/cricket_stats_screen.dart';
 import '../features/cricket/models/cricket_match_state.dart';
 
-class ScorecardScreen extends StatefulWidget {
+class ScorecardScreen extends ConsumerStatefulWidget {
   const ScorecardScreen({super.key});
 
   @override
-  State<ScorecardScreen> createState() => _ScorecardScreenState();
+  ConsumerState<ScorecardScreen> createState() => _ScorecardScreenState();
 }
 
-class _ScorecardScreenState extends State<ScorecardScreen> {
+class _ScorecardScreenState extends ConsumerState<ScorecardScreen> {
   String? _selectedSport; // null = All
-  late Future<List<MatchResult>> _matchesFuture;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadMatches();
-  }
-
-  void _loadMatches() {
-    setState(() {
-      _matchesFuture = DatabaseHelper.instance.getMatches(sport: _selectedSport);
-    });
-  }
-
-  Future<void> _deleteMatch(int id, int index) async {
-    // Optimistic UI update not strictly needed as we reload list from DB or snapshot, 
-    // but Swipe Dismiss removes item from UI immediately so we must handle DB async
-    await DatabaseHelper.instance.deleteMatch(id);
+  Future<void> _deleteMatch(String id) async {
+    await ref.read(matchControllerProvider.notifier).deleteMatch(id);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Match deleted")),
     );
-    // Don't need _loadMatches() if we trust Swipe removal, 
-    // but better to reload to stay in sync or removal logic from list.
-    // If we use FutureBuilder, we need to refresh connection.
-    _loadMatches();
   }
 
   Future<void> _confirmDeleteAll() async {
@@ -51,36 +34,45 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
         content: const Text("This action cannot be undone."),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("CANCEL")),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("DELETE", style: TextStyle(color: Colors.red))),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("DELETE", style: TextStyle(color: Colors.red)),
+          ),
         ],
-      )
+      ),
     );
 
     if (confirm == true) {
-      await DatabaseHelper.instance.deleteAllMatches();
-      _loadMatches();
+      await ref.read(matchControllerProvider.notifier).deleteAllMatches();
       if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("All matches deleted")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("All matches deleted")),
+        );
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final matchesAsync = ref.watch(matchesStreamProvider(_selectedSport));
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text("Scorecard"),
-        backgroundColor: Colors.green,
+        backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_forever),
+            tooltip: "Delete all history",
             onPressed: _confirmDeleteAll,
-          )
+          ),
         ],
       ),
-      body: Column(
+      body: SafeArea(
+        top: false,
+        child: Column(
         children: [
           // Filter Section
           Container(
@@ -108,14 +100,25 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
           
           // List Section
           Expanded(
-            child: FutureBuilder<List<MatchResult>>(
-              future: _matchesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            child: matchesAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 12),
+                    Text('Error: $error'),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () => ref.refresh(matchesStreamProvider(_selectedSport)),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+              data: (matches) {
+                if (matches.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -131,14 +134,13 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                   );
                 }
 
-                final matches = snapshot.data!;
                 return ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: NavigationPadding.listInsets(context, horizontal: 16, top: 16),
                   itemCount: matches.length,
                   itemBuilder: (context, index) {
                     final match = matches[index];
                     return Dismissible(
-                      key: Key(match.id.toString()),
+                      key: Key(match.id ?? index.toString()),
                       direction: DismissDirection.endToStart,
                       background: Container(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -151,7 +153,9 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
                         child: const Icon(Icons.delete, color: Colors.white, size: 30),
                       ),
                       onDismissed: (direction) {
-                        _deleteMatch(match.id!, index);
+                        if (match.id != null) {
+                          _deleteMatch(match.id!);
+                        }
                       },
                       child: _buildMatchCard(match),
                     );
@@ -162,6 +166,7 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -170,130 +175,185 @@ class _ScorecardScreenState extends State<ScorecardScreen> {
     return FilterChip(
       label: Text(label),
       selected: isSelected,
-      onSelected: (bool selected) {
+      onSelected: (selected) {
         setState(() {
           _selectedSport = value;
         });
-        _loadMatches();
       },
-      selectedColor: Colors.green.withValues(alpha: 0.2),
+      selectedColor: const Color(0xFF1B5E20).withAlpha(40),
+      checkmarkColor: const Color(0xFF1B5E20),
       labelStyle: TextStyle(
-        color: isSelected ? Colors.green : Colors.black87,
+        color: isSelected ? const Color(0xFF1B5E20) : Colors.black87,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
       ),
-      checkmarkColor: Colors.green,
     );
   }
 
   Widget _buildMatchCard(MatchResult match) {
-    IconData sportIcon;
-    Color sportColor;
-    
-    switch (match.sport.toLowerCase()) {
-      case 'badminton':
-        sportIcon = Icons.sports_tennis; // Shuttlecock proxy
-        sportColor = Colors.green;
-        break;
-      case 'volleyball':
-        sportIcon = Icons.sports_volleyball;
-        sportColor = Colors.orange;
-        break;
-      case 'tennis':
-        sportIcon = Icons.sports_tennis;
-        sportColor = Colors.lightGreen;
-        break;
-      case 'table tennis':
-        sportIcon = Icons.sports_baseball; // Placeholder
-        sportColor = Colors.blue;
-        break;
-      case 'cricket':
-        sportIcon = Icons.sports_cricket;
-        sportColor = Colors.blueAccent;
-        break;
-      default:
-        sportIcon = Icons.sports;
-        sportColor = Colors.blue;
-    }
-
-    final dateFormat = DateFormat('MMM d, y • h:mm a');
-    
-    // Parse Details for Set History
-    List<dynamic> setHistory = [];
-    String finalScoreText = "Score: ${match.scoreA} - ${match.scoreB}";
-
-    try {
-      final details = jsonDecode(match.details);
-      if (details is Map && details.containsKey('setHistory')) {
-         setHistory = details['setHistory'] as List<dynamic>;
-      }
-      
-      // Special case for Cricket
-      if (match.sport.toLowerCase() == 'cricket' && details.containsKey('finalScore')) {
-        finalScoreText = "Score: ${details['finalScore']}";
-      }
-    } catch (e) {
-      // ignore
-    }
-
     return Card(
       elevation: 2,
-      margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: () {
-          if (match.sport.toLowerCase() == 'cricket') {
+          if (match.sport == "Cricket") {
             try {
-              final details = jsonDecode(match.details);
-              if (details is Map && details.containsKey('cricket_state')) {
-                 final stateMap = details['cricket_state'];
-                 final state = CricketMatchState.fromMap(stateMap);
-                 Navigator.push(context, MaterialPageRoute(builder: (c) => CricketStatsScreen(state: state)));
+              final Map<String, dynamic> data = jsonDecode(match.details);
+              if (data.containsKey('cricket_state')) {
+                final state = CricketMatchState.fromMap(data['cricket_state']);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CricketStatsScreen(state: state)),
+                );
               }
-            } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error opening stats")));
-            }
+            } catch (_) {}
           }
         },
-        leading: CircleAvatar(
-          backgroundColor: sportColor.withValues(alpha: 0.1),
-          child: Icon(sportIcon, color: sportColor),
-        ),
-        title: Text(
-          "${match.teamA} vs ${match.teamB}",
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-             Text(dateFormat.format(match.date), style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-             const SizedBox(height: 4),
-             Text(
-               finalScoreText,
-               style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-             ),
-             if (setHistory.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
-                  child: Wrap(
-                    spacing: 4,
-                    children: setHistory.map((s) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(4)
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _getSportColor(match.sport).withAlpha(30),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      match.sport.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: _getSportColor(match.sport),
                       ),
-                      child: Text(s.toString(), style: const TextStyle(fontSize: 11, color: Colors.black54)),
-                    )).toList(),
+                    ),
                   ),
-                ),
-             Text(
-               "Winner: ${match.winner}",
-               style: TextStyle(color: sportColor, fontWeight: FontWeight.w500, fontSize: 13),
-             ),
-          ],
+                  Text(
+                    DateFormat('dd MMM yyyy, hh:mm a').format(match.date),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          match.teamA,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: match.winner == match.teamA ? Colors.green : Colors.black87,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          match.teamB,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: match.winner == match.teamB ? Colors.green : Colors.black87,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        "${match.scoreA}",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: match.winner == match.teamA ? Colors.green : Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "${match.scoreB}",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: match.winner == match.teamB ? Colors.green : Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      "Winner: ${match.winner}",
+                      style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.green),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  _buildDetailsText(match),
+                ],
+              )
+            ],
+          ),
         ),
-        isThreeLine: true,
       ),
     );
+  }
+
+  Widget _buildDetailsText(MatchResult match) {
+    if (match.sport == "Badminton" || match.sport == "Table Tennis" || match.sport == "Tennis" || match.sport == "Volleyball") {
+      try {
+        final Map<String, dynamic> data = jsonDecode(match.details);
+        if (data.containsKey('setScores')) {
+          final List sets = data['setScores'];
+          return Text(
+            sets.join(" | "),
+            style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+          );
+        }
+      } catch (_) {}
+    } else if (match.sport == "Cricket") {
+      try {
+        final Map<String, dynamic> data = jsonDecode(match.details);
+        if (data.containsKey('finalScore')) {
+          return Text(
+            data['finalScore'],
+            style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+          );
+        }
+      } catch (_) {}
+    }
+    return const SizedBox.shrink();
+  }
+
+  Color _getSportColor(String sport) {
+    switch (sport) {
+      case 'Badminton':
+        return Colors.blue;
+      case 'Volleyball':
+        return Colors.orange;
+      case 'Tennis':
+        return Colors.green;
+      case 'Table Tennis':
+        return Colors.purple;
+      case 'Cricket':
+        return Colors.redAccent;
+      default:
+        return Colors.grey;
+    }
   }
 }

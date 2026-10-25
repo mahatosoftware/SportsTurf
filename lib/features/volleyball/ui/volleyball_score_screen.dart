@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../logic/volleyball_state_machine.dart';
 import '../models/volleyball_match_state.dart';
 import 'volleyball_court_painter.dart';
 import 'dart:convert';
-import '../../../core/database/database_helper.dart';
+import '../../../core/providers/match_providers.dart';
 import '../../../core/models/match_result.dart';
+import '../../../core/providers/repository_providers.dart';
+import '../../../core/providers/auth_providers.dart';
+import '../../tournament/models/match.dart';
 
-class VolleyballScoreScreen extends StatefulWidget {
+class VolleyballScoreScreen extends ConsumerStatefulWidget {
   final String teamAName;
   final String teamBName;
   final int setsToWin;
   final int pointsPerSet;
+  final String? tournamentId;
+  final String? matchId;
 
   const VolleyballScoreScreen({
     super.key,
@@ -18,13 +24,15 @@ class VolleyballScoreScreen extends StatefulWidget {
     this.teamBName = "Team B",
     this.setsToWin = 3,
     this.pointsPerSet = 25,
+    this.tournamentId,
+    this.matchId,
   });
 
   @override
-  State<VolleyballScoreScreen> createState() => _VolleyballScoreScreenState();
+  ConsumerState<VolleyballScoreScreen> createState() => _VolleyballScoreScreenState();
 }
 
-class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
+class _VolleyballScoreScreenState extends ConsumerState<VolleyballScoreScreen> {
   late VolleyballStateMachine _stateMachine;
 
   @override
@@ -75,7 +83,43 @@ class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
       }),
     );
 
-    await DatabaseHelper.instance.insertMatch(result);
+    await ref.read(matchControllerProvider.notifier).saveMatch(result);
+
+    if (widget.tournamentId != null && widget.matchId != null) {
+      try {
+        final currentUser = ref.read(currentUserProvider);
+        final tourney = await ref.read(tournamentRepositoryProvider).getTournamentById(widget.tournamentId!);
+        final match = tourney?.matches.where((m) => m.id == widget.matchId).firstOrNull;
+        final isOrganizer = currentUser != null && tourney != null && (currentUser.isSuperAdmin || tourney.creatorId == currentUser.id || tourney.isManager(currentUser.id));
+        final canScore = isOrganizer || (currentUser != null && ((match != null && match.assignedScorerId == currentUser.id) || (tourney != null && tourney.isScorer(currentUser.id))));
+
+        if (!canScore) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Permission Denied: Spectators cannot submit tournament match scores.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        final winnerId = state.matchWinner == VolleyballTeam.teamA ? widget.teamAName : widget.teamBName;
+        await ref.read(tournamentRepositoryProvider).updateMatchScore(
+          widget.tournamentId!,
+          widget.matchId!,
+          state.setsWonA,
+          state.setsWonB,
+          winnerId,
+        );
+        await ref.read(tournamentRepositoryProvider).updateMatchStatus(
+          widget.tournamentId!,
+          widget.matchId!,
+          MatchStatus.completed,
+        );
+      } catch (_) {}
+    }
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -129,7 +173,9 @@ class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
           ),
         ],
       ),
-      body: LayoutBuilder(
+      body: SafeArea(
+        top: false,
+        child: LayoutBuilder(
         builder: (context, constraints) {
           final w = constraints.maxWidth;
           final h = constraints.maxHeight;
@@ -232,6 +278,7 @@ class _VolleyballScoreScreenState extends State<VolleyballScoreScreen> {
             ],
           );
         },
+      ),
       ),
     );
   }

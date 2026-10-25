@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../logic/badminton_state_machine.dart';
 import '../models/badminton_match_state.dart';
 import 'badminton_court_card.dart';
 import 'dart:convert';
-import '../../../core/database/database_helper.dart';
+import '../../../core/providers/match_providers.dart';
+import '../../../core/widgets/bottom_navigation_padding.dart';
 import '../../../core/models/match_result.dart';
 
-class BadmintonScoreScreen extends StatefulWidget {
+class BadmintonScoreScreen extends ConsumerStatefulWidget {
   final BadmintonMatchType matchType;
   final String playerA1;
   final String playerA2;
@@ -27,10 +29,10 @@ class BadmintonScoreScreen extends StatefulWidget {
   });
 
   @override
-  State<BadmintonScoreScreen> createState() => _BadmintonScoreScreenState();
+  ConsumerState<BadmintonScoreScreen> createState() => _BadmintonScoreScreenState();
 }
 
-class _BadmintonScoreScreenState extends State<BadmintonScoreScreen> {
+class _BadmintonScoreScreenState extends ConsumerState<BadmintonScoreScreen> {
   late BadmintonStateMachine _machine;
 
   @override
@@ -137,7 +139,7 @@ class _BadmintonScoreScreenState extends State<BadmintonScoreScreen> {
       }),
     );
 
-    await DatabaseHelper.instance.insertMatch(result);
+    await ref.read(matchControllerProvider.notifier).saveMatch(result);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -163,42 +165,46 @@ class _BadmintonScoreScreenState extends State<BadmintonScoreScreen> {
           )
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: BadmintonCourtCard(
-                matchState: _machine.state,
-                onScoreA: () {
-                   _machine.scorePoint(BadmintonPlayer.playerA);
-                   _update();
-                },
-                onScoreB: () {
-                   _machine.scorePoint(BadmintonPlayer.playerB);
-                   _update();
-                },
-                onUndo: () {
-                   _machine.undo();
-                   _update();
-                },
-                onSave: _saveMatch,
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: BadmintonCourtCard(
+                  matchState: _machine.state,
+                  onScoreA: () {
+                     _machine.scorePoint(BadmintonPlayer.playerA);
+                     _update();
+                  },
+                  onScoreB: () {
+                     _machine.scorePoint(BadmintonPlayer.playerB);
+                     _update();
+                  },
+                  onUndo: () {
+                     _machine.undo();
+                     _update();
+                  },
+                  onSave: _saveMatch,
+                ),
               ),
             ),
-          ),
-          
-          // Legend
-          const Padding(
-             padding: EdgeInsets.only(bottom: 24),
-             child: Row(
-               mainAxisAlignment: MainAxisAlignment.center,
-               children: [
-                 Icon(Icons.sports_tennis, color: Colors.white, size: 16), // Shuttle
-                 SizedBox(width: 8),
-                 Text("Shuttle indicates Server", style: TextStyle(color: Colors.white54))
-               ],
-             ),
-          )
-        ],
+            
+            // Legend
+            const Padding(
+               padding: EdgeInsets.only(bottom: 8),
+               child: Row(
+                 mainAxisAlignment: MainAxisAlignment.center,
+                 children: [
+                   Icon(Icons.sports_tennis, color: Colors.white, size: 16), // Shuttle
+                   SizedBox(width: 8),
+                   Text("Shuttle indicates Server", style: TextStyle(color: Colors.white54))
+                 ],
+               ),
+            ),
+            const BottomNavSpacing(),
+          ],
+        ),
       ),
     );
   }

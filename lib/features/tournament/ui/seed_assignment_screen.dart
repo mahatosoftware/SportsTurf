@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 import '../models/tournament.dart';
 import '../models/team.dart';
 import '../models/match.dart';
 import '../logic/fixture_generator.dart';
-import '../../../../core/database/database_helper.dart';
+import '../providers/tournament_providers.dart';
+import '../../../../core/providers/repository_providers.dart';
+import '../../../../core/providers/auth_providers.dart';
+import '../../../../core/widgets/bottom_navigation_padding.dart';
 import '../../../../core/models/player.dart' as db_player;
 import 'tournament_dashboard_screen.dart';
 
-class SeedAssignmentScreen extends StatefulWidget {
+class SeedAssignmentScreen extends ConsumerStatefulWidget {
   final String tournamentName;
   final String sport;
   final TournamentFormat format;
@@ -24,13 +29,12 @@ class SeedAssignmentScreen extends StatefulWidget {
   });
 
   @override
-  State<SeedAssignmentScreen> createState() => _SeedAssignmentScreenState();
+  ConsumerState<SeedAssignmentScreen> createState() => _SeedAssignmentScreenState();
 }
 
-class _SeedAssignmentScreenState extends State<SeedAssignmentScreen> {
+class _SeedAssignmentScreenState extends ConsumerState<SeedAssignmentScreen> {
   late List<Team> _teams;
   List<db_player.Player> _availablePlayers = [];
-  bool _isLoadingPlayers = true;
   bool _usePlayers = false; // Toggle state
 
   List<Team> _availableTeams = [];
@@ -43,13 +47,14 @@ class _SeedAssignmentScreenState extends State<SeedAssignmentScreen> {
   }
 
   Future<void> _loadData() async {
-    final players = await DatabaseHelper.instance.getPlayers();
-    final teams = await DatabaseHelper.instance.getTeams();
-    setState(() {
-      _availablePlayers = players;
-      _availableTeams = teams;
-      _isLoadingPlayers = false; 
-    });
+    final players = await ref.read(playerRepositoryProvider).getPlayers();
+    final teams = await ref.read(teamRepositoryProvider).getTeams();
+    if (mounted) {
+      setState(() {
+        _availablePlayers = players;
+        _availableTeams = teams;
+      });
+    }
   }
 
   @override
@@ -76,7 +81,7 @@ class _SeedAssignmentScreenState extends State<SeedAssignmentScreen> {
           Expanded(
             child: widget.seeded
                 ? ReorderableListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: NavigationPadding.listInsets(context, horizontal: 16, top: 0, hasFab: true),
                     header: const Padding(
                       padding: EdgeInsets.only(bottom: 16.0),
                       child: Text(
@@ -115,7 +120,7 @@ class _SeedAssignmentScreenState extends State<SeedAssignmentScreen> {
                     },
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: NavigationPadding.listInsets(context, horizontal: 16, top: 0, hasFab: true),
                     itemCount: _teams.length,
                     itemBuilder: (context, index) {
                       return Card(
@@ -140,22 +145,12 @@ class _SeedAssignmentScreenState extends State<SeedAssignmentScreen> {
     );
   }
 
-  Widget _buildListItem(int index) {
-     return Card(
-        margin: const EdgeInsets.only(bottom: 8),
-        child: ListTile(
-          leading: const Icon(Icons.person, color: Colors.green),
-          title: _buildNameInput(index),
-        ),
-      );
-  }
-
   Widget _buildModeToggle() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green.withOpacity(0.5)),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
       ),
       padding: const EdgeInsets.all(4),
       child: Row(
@@ -312,19 +307,42 @@ class _SeedAssignmentScreenState extends State<SeedAssignmentScreen> {
       matches = FixtureGenerator.generateDoubleElimination(_teams, widget.seeded);
     }
 
+    final currentUser = ref.read(currentUserProvider);
+    var creatorId = currentUser?.id;
+    if (creatorId == null || creatorId.isEmpty) {
+      try {
+        final authRepo = ref.read(authRepositoryProvider);
+        final user = authRepo.currentUser;
+        if (user != null) {
+          creatorId = user.id;
+        } else {
+          final anon = await authRepo.signInAnonymously();
+          creatorId = anon.id;
+        }
+      } catch (_) {
+        creatorId = 'organizer_${DateTime.now().millisecondsSinceEpoch}';
+      }
+    }
+
+    final shareCode = Tournament.generateShareCode();
+    final tournamentId = const Uuid().v4();
+
     final tournament = Tournament(
-      id: DateTime.now().toIso8601String(),
+      id: tournamentId,
+      creatorId: creatorId,
+      shareCode: shareCode,
+      isPublic: true,
       name: widget.tournamentName,
       sportType: widget.sport,
       format: widget.format,
       participants: _teams,
       matches: matches.cast<TournamentMatch>(),
-      status: TournamentStatus.ongoing,
+      status: TournamentStatus.inProgress,
       seeded: widget.seeded,
     );
     
-    // Save to DB
-    await DatabaseHelper.instance.insertTournament(tournament);
+    // Save to Firestore via Riverpod
+    await ref.read(tournamentControllerProvider.notifier).createTournament(tournament);
 
     if (!mounted) return;
 

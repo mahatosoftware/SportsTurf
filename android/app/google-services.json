@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "485736064883",
+    "project_id": "sportsturf-prod",
+    "storage_bucket": "sportsturf-prod.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:485736064883:android:c25cb08681a14070178706",
+        "android_client_info": {
+          "package_name": "in.mahato.sportsturf"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "485736064883-b22k9tungm9vp3fo0u8esu5j42frifrc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "in.mahato.sportsturf",
+            "certificate_hash": "7efcc05d8d541c74661f45d467f85f9cf7d0d142"
+          }
+        },
+        {
+          "client_id": "485736064883-k45gpm1nfsqcqm8e161cf9q0566r0ahu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "in.mahato.sportsturf",
+            "certificate_hash": "6f3ef96b1a990d866b4cfc0f74b5ac04bb45366c"
+          }
+        },
+        {
+          "client_id": "485736064883-bdvc4f52o7v8aakmufnl7vfvqskmvb2o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRhBXHXrcPO_FhZ90oif8gS9y3ImPuW-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "485736064883-bdvc4f52o7v8aakmufnl7vfvqskmvb2o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

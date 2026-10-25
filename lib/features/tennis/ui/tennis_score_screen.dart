@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../logic/tennis_state_machine.dart';
 import '../models/tennis_match_state.dart';
 import 'tennis_court_card.dart';
 import 'dart:convert';
-import '../../../core/database/database_helper.dart';
+import '../../../core/providers/match_providers.dart';
+import '../../../core/widgets/bottom_navigation_padding.dart';
 import '../../../core/models/match_result.dart';
 
-class TennisScoreScreen extends StatefulWidget {
+class TennisScoreScreen extends ConsumerStatefulWidget {
   final MatchType matchType;
   final String playerA1;
   final String playerA2;
@@ -23,10 +25,10 @@ class TennisScoreScreen extends StatefulWidget {
   });
 
   @override
-  State<TennisScoreScreen> createState() => _TennisScoreScreenState();
+  ConsumerState<TennisScoreScreen> createState() => _TennisScoreScreenState();
 }
 
-class _TennisScoreScreenState extends State<TennisScoreScreen> {
+class _TennisScoreScreenState extends ConsumerState<TennisScoreScreen> {
   late TennisStateMachine _machine;
   
   @override
@@ -101,7 +103,8 @@ class _TennisScoreScreenState extends State<TennisScoreScreen> {
                    _LegendItem(color: Colors.orangeAccent, label: "Game/Set"),
                 ],
               ),
-            )
+            ),
+            const BottomNavSpacing(),
           ],
         ),
       ),
@@ -168,7 +171,7 @@ class _TennisScoreScreenState extends State<TennisScoreScreen> {
       }),
     );
 
-    await DatabaseHelper.instance.insertMatch(result);
+    await ref.read(matchControllerProvider.notifier).saveMatch(result);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

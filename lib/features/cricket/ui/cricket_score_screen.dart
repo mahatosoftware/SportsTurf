@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../logic/cricket_state_machine.dart';
 import '../models/cricket_match_state.dart';
 import 'cricket_stats_screen.dart';
 import 'dart:convert';
 import '../../../core/database/database_helper.dart';
+import '../../../core/widgets/bottom_navigation_padding.dart';
 import '../../../core/models/match_result.dart';
+import '../../../core/providers/repository_providers.dart';
+import '../../../core/providers/auth_providers.dart';
+import '../../tournament/models/match.dart';
 
-class CricketScoreScreen extends StatefulWidget {
+class CricketScoreScreen extends ConsumerStatefulWidget {
   final String teamA;
   final String teamB;
   final List<String> squadA;
   final List<String> squadB;
   final int overs;
   final String? battingFirst;
+  final String? tournamentId;
+  final String? matchId;
 
   const CricketScoreScreen({
     super.key,
@@ -22,13 +29,15 @@ class CricketScoreScreen extends StatefulWidget {
     this.squadB = const [],
     required this.overs,
     this.battingFirst,
+    this.tournamentId,
+    this.matchId,
   });
 
   @override
-  State<CricketScoreScreen> createState() => _CricketScoreScreenState();
+  ConsumerState<CricketScoreScreen> createState() => _CricketScoreScreenState();
 }
 
-class _CricketScoreScreenState extends State<CricketScoreScreen> {
+class _CricketScoreScreenState extends ConsumerState<CricketScoreScreen> {
   late CricketStateMachine _machine;
   
   bool _isWide = false;
@@ -419,6 +428,46 @@ class _CricketScoreScreenState extends State<CricketScoreScreen> {
     
     await DatabaseHelper.instance.insertMatch(result);
 
+    if (widget.tournamentId != null && widget.matchId != null) {
+      try {
+        final currentUser = ref.read(currentUserProvider);
+        final tourney = await ref.read(tournamentRepositoryProvider).getTournamentById(widget.tournamentId!);
+        final match = tourney?.matches.where((m) => m.id == widget.matchId).firstOrNull;
+        final isOrganizer = currentUser != null && tourney != null && (currentUser.isSuperAdmin || tourney.creatorId == currentUser.id || tourney.isManager(currentUser.id));
+        final canScore = isOrganizer || (currentUser != null && ((match != null && match.assignedScorerId == currentUser.id) || (tourney != null && tourney.isScorer(currentUser.id))));
+
+        if (!canScore) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Permission Denied: Spectators cannot submit tournament match scores.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        final winnerId = state.matchResult != null && state.matchResult!.contains(widget.teamA)
+            ? widget.teamA
+            : (state.matchResult != null && state.matchResult!.contains(widget.teamB)
+                ? widget.teamB
+                : null);
+        await ref.read(tournamentRepositoryProvider).updateMatchScore(
+          widget.tournamentId!,
+          widget.matchId!,
+          state.totalRuns,
+          0,
+          winnerId,
+        );
+        await ref.read(tournamentRepositoryProvider).updateMatchStatus(
+          widget.tournamentId!,
+          widget.matchId!,
+          MatchStatus.completed,
+        );
+      } catch (_) {}
+    }
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Match Result Saved!")),
@@ -612,7 +661,8 @@ class _CricketScoreScreenState extends State<CricketScoreScreen> {
                          onPressed: _machine.canUndo ? () => setState(() => _machine.undo()) : null,
                        ),
                     ],
-                  )
+                  ),
+                  const BottomNavSpacing(),
                 ],
               ),
             ),

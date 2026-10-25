@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/bottom_navigation_padding.dart';
 import '../models/cricket_match_state.dart';
 
 class CricketStatsScreen extends StatelessWidget {
@@ -32,17 +33,20 @@ class CricketStatsScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            _buildSummaryTab(),
-            _buildScorecardTab(),
-          ],
+        body: SafeArea(
+          top: false,
+          child: TabBarView(
+            children: [
+              _buildSummaryTab(context),
+              _buildScorecardTab(context),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSummaryTab() {
+  Widget _buildSummaryTab(BuildContext context) {
     String winner = state.matchResult ?? "Match in Progress";
     
     // Find Top Scorer
@@ -71,7 +75,7 @@ class CricketStatsScreen extends StatelessWidget {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: NavigationPadding.listInsets(context, horizontal: 16, top: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -174,7 +178,7 @@ class CricketStatsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildScorecardTab() {
+  Widget _buildScorecardTab(BuildContext context) {
     // Separate Batters and Bowlers from playerStats
     List<CricketPlayer> batters = state.playerStats.values.where((p) => p.runs > 0 || p.ballsFaced > 0 || p.isOut).toList();
     List<CricketPlayer> bowlers = state.playerStats.values.where((p) => p.ballsBowled > 0).toList();
@@ -184,7 +188,7 @@ class CricketStatsScreen extends StatelessWidget {
     bowlers.sort((a, b) => b.wickets.compareTo(a.wickets)); // Most wickets first
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: NavigationPadding.listInsets(context, horizontal: 16, top: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

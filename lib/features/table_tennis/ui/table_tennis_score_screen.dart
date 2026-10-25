@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/table_tennis_match_state.dart';
 import '../logic/table_tennis_state_machine.dart';
 import 'table_tennis_court_card.dart';
 import 'dart:convert';
-import '../../../core/database/database_helper.dart';
+import '../../../core/providers/match_providers.dart';
+import '../../../core/widgets/bottom_navigation_padding.dart';
 import '../../../core/models/match_result.dart';
 
-class TableTennisScoreScreen extends StatefulWidget {
+class TableTennisScoreScreen extends ConsumerStatefulWidget {
   final TTMatchType matchType;
   final String playerA1;
   final String playerA2;
@@ -25,10 +27,10 @@ class TableTennisScoreScreen extends StatefulWidget {
   });
 
   @override
-  State<TableTennisScoreScreen> createState() => _TableTennisScoreScreenState();
+  ConsumerState<TableTennisScoreScreen> createState() => _TableTennisScoreScreenState();
 }
 
-class _TableTennisScoreScreenState extends State<TableTennisScoreScreen> {
+class _TableTennisScoreScreenState extends ConsumerState<TableTennisScoreScreen> {
   late TableTennisStateMachine _machine;
 
   @override
@@ -78,7 +80,7 @@ class _TableTennisScoreScreenState extends State<TableTennisScoreScreen> {
       }),
     );
 
-    await DatabaseHelper.instance.insertMatch(result);
+    await ref.read(matchControllerProvider.notifier).saveMatch(result);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -152,15 +154,22 @@ class _TableTennisScoreScreenState extends State<TableTennisScoreScreen> {
         ],
       ),
       body: SafeArea(
-        child: Center(
-          child: TableTennisCourtCard(
-            matchState: _machine.state,
-            onScoreA: () { _machine.scorePoint(TTPlayer.playerA); _update(); },
-            onScoreB: () { _machine.scorePoint(TTPlayer.playerB); _update(); },
-            onUndo: () { _machine.undo(); _update(); },
-            onToggleSide: () { _machine.toggleServeSide(); _update(); },
-            onSave: _saveMatch,
-          ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: TableTennisCourtCard(
+                  matchState: _machine.state,
+                  onScoreA: () { _machine.scorePoint(TTPlayer.playerA); _update(); },
+                  onScoreB: () { _machine.scorePoint(TTPlayer.playerB); _update(); },
+                  onUndo: () { _machine.undo(); _update(); },
+                  onToggleSide: () { _machine.toggleServeSide(); _update(); },
+                  onSave: _saveMatch,
+                ),
+              ),
+            ),
+            const BottomNavSpacing(),
+          ],
         ),
       ),
     );
