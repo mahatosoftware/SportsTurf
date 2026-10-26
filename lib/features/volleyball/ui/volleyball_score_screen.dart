@@ -231,15 +231,17 @@ class _VolleyballScoreScreenState extends ConsumerState<VolleyballScoreScreen> {
               Positioned(
                 top: h / 2 - 20,
                 left: 20,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    "Set ${state.currentSet}",
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                child: IgnorePointer(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      "Set ${state.currentSet}",
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ),
@@ -292,33 +294,25 @@ class _VolleyballScoreScreenState extends ConsumerState<VolleyballScoreScreen> {
     required bool isRotated,
     required Color color,
   }) {
-    // If rotated (Team A/Top), rotate 180 degrees so they can read it from across table? 
-    // Or just Keep it upright if it's a mobile app for one person to score.
-    // The requirement says "Court should immediately look like a volleyball court".
-    // Usually standard mobile scoring apps keep text upright. 
-    // Let's keep it upright for accessibility, unless user asked for 2-player mode.
-    // User said: "Display centered, top-down volleyball court".
-    // "Team A on top or left".
-    
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        splashColor: color.withValues(alpha: 0.3),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          alignment: Alignment.center,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (isRotated) ...[
-                 // Top Section (Team A)
-                 _buildScoreRow(teamName, score, sets, isServing, color),
-              ] else ...[
-                 // Bottom Section (Team B)
-                 _buildScoreRow(teamName, score, sets, isServing, color),
-              ]
-            ],
+    return SizedBox.expand(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          splashColor: color.withValues(alpha: 0.3),
+          highlightColor: color.withValues(alpha: 0.1),
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: Colors.transparent, // Ensures hit testing catches touches ANYWHERE inside the entire court half
+            padding: const EdgeInsets.all(24),
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildScoreRow(teamName, score, sets, isServing, color),
+              ],
+            ),
           ),
         ),
       ),

@@ -73,7 +73,8 @@ class BadmintonCourtCard extends StatelessWidget {
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: matchState.isMatchComplete ? null : onScoreA,
-                          splashColor: Colors.white12,
+                          splashColor: Colors.white24,
+                          highlightColor: Colors.white10,
                           child: _buildPlayerSection(
                             BadmintonPlayer.playerA,
                             matchState.scoreA,
@@ -87,7 +88,8 @@ class BadmintonCourtCard extends StatelessWidget {
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: matchState.isMatchComplete ? null : onScoreB,
-                          splashColor: Colors.white12,
+                          splashColor: Colors.white24,
+                          highlightColor: Colors.white10,
                           child: _buildPlayerSection(
                             BadmintonPlayer.playerB,
                             matchState.scoreB,
@@ -104,8 +106,10 @@ class BadmintonCourtCard extends StatelessWidget {
                    Positioned(
                      left: indicatorPos.dx - 16,
                      top: indicatorPos.dy - 16,
-                     child: const Icon(Icons.sports_tennis, 
-                        color: Colors.white, size: 32, shadows: [Shadow(blurRadius: 10, color: Colors.yellowAccent)]),
+                     child: const IgnorePointer(
+                       child: Icon(Icons.sports_tennis, 
+                          color: Colors.white, size: 32, shadows: [Shadow(blurRadius: 10, color: Colors.yellowAccent)]),
+                     ),
                    ),
                    
                 // 4. Undo Button
@@ -174,43 +178,47 @@ class BadmintonCourtCard extends StatelessWidget {
     }
     String historyText = historyStrings.join(" - ");
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Name
-          Text(
-            _getPlayerLabel(player),
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.1),
-             textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          
-          // Current Score
-          Text(
-            "$score",
-            style: const TextStyle(color: Colors.white, fontSize: 72, fontWeight: FontWeight.w900, shadows: [Shadow(blurRadius: 5, color: Colors.black26)]),
-          ),
-          
-          // Sets & History
-          Container(
-             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-             decoration: BoxDecoration(color: Colors.black38, borderRadius: BorderRadius.circular(16)),
-             child: Row(
-               mainAxisSize: MainAxisSize.min,
-               children: [
-                 Text("SETS: $setsWon", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                 if (historyText.isNotEmpty) ...[
-                   const SizedBox(width: 8),
-                   Container(width: 1, height: 16, color: Colors.white54),
-                   const SizedBox(width: 8),
-                   Text(historyText, style: const TextStyle(color: Colors.white70)),
-                 ]
-               ],
-             ),
-          ),
-        ],
+    return SizedBox.expand(
+      child: Container(
+        color: Colors.transparent, // Ensures hit testing catches touches ANYWHERE inside the entire court half
+        padding: const EdgeInsets.all(16),
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Name
+            Text(
+              _getPlayerLabel(player),
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.1),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            
+            // Current Score
+            Text(
+              "$score",
+              style: const TextStyle(color: Colors.white, fontSize: 72, fontWeight: FontWeight.w900, shadows: [Shadow(blurRadius: 5, color: Colors.black26)]),
+            ),
+            
+            // Sets & History
+            Container(
+               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+               decoration: BoxDecoration(color: Colors.black38, borderRadius: BorderRadius.circular(16)),
+               child: Row(
+                 mainAxisSize: MainAxisSize.min,
+                 children: [
+                   Text("SETS: $setsWon", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                   if (historyText.isNotEmpty) ...[
+                     const SizedBox(width: 8),
+                     Container(width: 1, height: 16, color: Colors.white54),
+                     const SizedBox(width: 8),
+                     Text(historyText, style: const TextStyle(color: Colors.white70)),
+                   ]
+                 ],
+               ),
+            ),
+          ],
+        ),
       ),
     );
   }

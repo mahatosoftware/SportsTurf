@@ -74,26 +74,31 @@ class TableTennisCourtCard extends StatelessWidget {
                     // TOP HALF (Player A)
                     Expanded(
                       child: Stack(
-                        alignment: Alignment.center,
                         children: [
-                          _buildPlayerInfo(TTPlayer.playerA, matchState.scoreA, matchState.gamesWonA),
-                          
-                          // Tap to Score
+                          // Tap anywhere inside top half to score for Player A
                           Positioned.fill(
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: matchState.isMatchComplete ? null : onScoreA,
-                                overlayColor: WidgetStateProperty.all(Colors.white12),
+                                splashColor: Colors.white24,
+                                highlightColor: Colors.white10,
+                                child: Container(
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  color: Colors.transparent,
+                                  alignment: Alignment.center,
+                                  child: _buildPlayerInfo(TTPlayer.playerA, matchState.scoreA, matchState.gamesWonA),
+                                ),
                               ),
                             ),
                           ),
                           
-                           if (matchState.server == TTPlayer.playerA)
-                             Positioned(
-                               right: 8, top: 8,
-                               child: _buildSideToggle(),
-                             ),
+                          if (matchState.server == TTPlayer.playerA)
+                            Positioned(
+                              right: 8, top: 8,
+                              child: _buildSideToggle(),
+                            ),
                         ],
                       ),
                     ),
@@ -101,26 +106,31 @@ class TableTennisCourtCard extends StatelessWidget {
                     // BOTTOM HALF (Player B)
                     Expanded(
                       child: Stack(
-                        alignment: Alignment.center,
                         children: [
-                          _buildPlayerInfo(TTPlayer.playerB, matchState.scoreB, matchState.gamesWonB),
-                          
-                          // Tap to Score
+                          // Tap anywhere inside bottom half to score for Player B
                           Positioned.fill(
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: matchState.isMatchComplete ? null : onScoreB,
-                                overlayColor: WidgetStateProperty.all(Colors.white12),
+                                splashColor: Colors.white24,
+                                highlightColor: Colors.white10,
+                                child: Container(
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  color: Colors.transparent,
+                                  alignment: Alignment.center,
+                                  child: _buildPlayerInfo(TTPlayer.playerB, matchState.scoreB, matchState.gamesWonB),
+                                ),
                               ),
                             ),
                           ),
                           
                           if (matchState.server == TTPlayer.playerB)
-                             Positioned(
-                               right: 8, bottom: 8,
-                               child: _buildSideToggle(),
-                             ),
+                            Positioned(
+                              right: 8, bottom: 8,
+                              child: _buildSideToggle(),
+                            ),
                         ],
                       ),
                     ),
@@ -132,7 +142,9 @@ class TableTennisCourtCard extends StatelessWidget {
                   Positioned(
                     left: ballPos.dx - 12, 
                     top: ballPos.dy - 12,
-                    child: const Icon(Icons.circle, color: Colors.orange, size: 24, shadows: [Shadow(color: Colors.white, blurRadius: 5)]),
+                    child: const IgnorePointer(
+                      child: Icon(Icons.circle, color: Colors.orange, size: 24, shadows: [Shadow(color: Colors.white, blurRadius: 5)]),
+                    ),
                   ),
                   
                 // 4. Undo Button

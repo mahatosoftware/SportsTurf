@@ -132,7 +132,9 @@ class TennisCourtCard extends StatelessWidget {
                 Positioned(
                   left: ballPos.dx - 12, // Center icon size 24
                   top: ballPos.dy - 12,
-                  child: const Icon(Icons.sports_tennis, color: Colors.yellowAccent, size: 24),
+                  child: const IgnorePointer(
+                    child: Icon(Icons.sports_tennis, color: Colors.yellowAccent, size: 24),
+                  ),
                 ),
 
               // 4. UI Overlays (Scores, Undo, etc)
@@ -185,11 +187,14 @@ class TennisCourtCard extends StatelessWidget {
   }
 
   Widget _buildPlayerSection(Player player, TennisPoint point, int games, int setsWon) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+    return SizedBox.expand(
+      child: Container(
+        color: Colors.transparent, // Ensures hit testing catches touches ANYWHERE inside the entire court half
+        padding: const EdgeInsets.all(16),
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
           // Player Label
           Text(
             _getPlayerLabel(player),
@@ -237,8 +242,9 @@ class TennisCourtCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   String _getPointString(TennisPoint point) {
     switch (point) {
